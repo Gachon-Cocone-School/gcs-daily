@@ -4,7 +4,7 @@ import { useState } from "react";
 import { strings } from "~/constants/strings";
 
 export function LoginButton() {
-  const { user, isAllowedEmail, signOut } = useAuth();
+  const { user, authState, signOut } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +29,7 @@ export function LoginButton() {
     }
   };
 
+  // Show loading state
   if (loading) {
     return (
       <button
@@ -58,7 +59,8 @@ export function LoginButton() {
     );
   }
 
-  if (user && !isAllowedEmail) {
+  // Show unauthorized error and sign out button
+  if (user && authState === "denied") {
     return (
       <div className="space-y-4 text-center">
         <div className="rounded-lg bg-red-50 p-4">
@@ -76,7 +78,8 @@ export function LoginButton() {
     );
   }
 
-  if (user && isAllowedEmail) {
+  // Show sign out button in header
+  if (user && authState === "allowed") {
     return (
       <button
         onClick={signOut}
@@ -87,6 +90,7 @@ export function LoginButton() {
     );
   }
 
+  // Show sign in button in main content
   return (
     <div className="space-y-4">
       <button

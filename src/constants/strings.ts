@@ -15,7 +15,7 @@ export const strings = {
           "인증되지 않은 이메일 주소입니다. GCS 학생들만 사용할 수 있습니다.",
       },
     },
-    signOut: "로그아웃",
+    signOut: "나가기",
     welcome: {
       message: (email: string) => `환영합니다, ${email}님`,
       authorized: "인증된 사용자입니다",

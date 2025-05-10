@@ -1,18 +1,24 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "~/lib/supabase";
 
+type AuthState = "initializing" | "checking" | "allowed" | "denied";
+
 type AuthContextType = {
   user: User | null;
-  loading: boolean;
-  isAllowedEmail: boolean;
+  authState: AuthState;
   signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: true,
-  isAllowedEmail: false,
+  authState: "initializing",
   signOut: async () => {},
 });
 
@@ -20,69 +26,64 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAllowedEmail, setIsAllowedEmail] = useState(false);
-
-  useEffect(() => {
-    // Check current auth status
-    void supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setUser(session?.user ?? null);
-        void checkAllowedEmail(session?.user?.email);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error getting auth session:", error);
-        setLoading(false);
-      });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      checkAllowedEmail(session?.user?.email);
-      setLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  const [authState, setAuthState] = useState<AuthState>("initializing");
 
   const checkAllowedEmail = async (email: string | undefined) => {
     if (!email) {
-      setIsAllowedEmail(false);
+      setAuthState("denied");
       return;
     }
 
+    setAuthState("checking");
+
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("allowed_emails")
         .select("email")
         .eq("email", email)
         .single();
 
-      if (error) {
-        console.error("Error checking allowed email:", error);
-        setIsAllowedEmail(false);
-        return;
-      }
-
-      setIsAllowedEmail(!!data);
+      setAuthState(data ? "allowed" : "denied");
     } catch (error) {
       console.error("Error checking allowed email:", error);
-      setIsAllowedEmail(false);
+      setAuthState("denied");
     }
   };
 
+  const updateAuthState = useCallback(
+    async (session: { user: User | null } | null) => {
+      setUser(session?.user ?? null);
+
+      if (!session?.user) {
+        setAuthState("initializing");
+        return;
+      }
+
+      await checkAllowedEmail(session.user.email);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    void supabase.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        await updateAuthState(session);
+      })
+      .catch((error) => {
+        console.error("Error getting auth session:", error);
+        setAuthState("denied");
+      });
+  }, [updateAuthState]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
+    setUser(null);
+    setAuthState("initializing");
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAllowedEmail, signOut }}>
+    <AuthContext.Provider value={{ user, authState, signOut }}>
       {children}
     </AuthContext.Provider>
   );
