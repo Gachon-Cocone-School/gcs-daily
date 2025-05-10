@@ -2,6 +2,7 @@ import { useAuth } from "~/providers/AuthProvider";
 import { supabase } from "~/lib/supabase";
 import { useState } from "react";
 import { strings } from "~/constants/strings";
+import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
 
 export function LoginButton() {
   const { user, authState, signOut } = useAuth();
@@ -83,9 +84,10 @@ export function LoginButton() {
     return (
       <button
         onClick={signOut}
-        className="inline-flex items-center rounded-full border border-gray-200 bg-white px-6 py-3 text-base font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 focus:outline-none"
+        className="inline-flex items-center rounded-lg p-2 text-gray-600 transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 focus:outline-none"
+        aria-label={strings.auth.signOut}
       >
-        {strings.auth.signOut}
+        <ArrowRightOnRectangleIcon className="h-5 w-5" />
       </button>
     );
   }

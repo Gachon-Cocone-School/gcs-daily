@@ -1,13 +1,17 @@
 import Head from "next/head";
+import Image from "next/image";
 import { LoginButton } from "~/components/LoginButton";
 import { Calendar } from "~/components/Calendar";
 import { useAuth } from "~/providers/AuthProvider";
 import { useTeam } from "~/hooks/useTeam";
+import { useUsers } from "~/hooks/useUsers";
 import { strings } from "~/constants/strings";
 
 export default function Home() {
   const { user, authState } = useAuth();
   const { team } = useTeam(user?.email);
+  const { users } = useUsers();
+  const currentUser = user?.email ? users[user.email] : null;
 
   return (
     <>
@@ -23,7 +27,33 @@ export default function Home() {
             <h1 className="text-xl font-semibold text-gray-900">
               {strings.app.title}
             </h1>
-            {user && authState === "allowed" && <LoginButton />}
+            {user && authState === "allowed" && (
+              <div className="flex items-center gap-3">
+                {currentUser && (
+                  <div className="flex items-center gap-2">
+                    <div className="relative h-8 w-8 overflow-hidden rounded-full">
+                      {currentUser.avatar_url ? (
+                        <Image
+                          src={currentUser.avatar_url}
+                          alt={currentUser.full_name}
+                          fill
+                          sizes="32px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gray-200 text-sm text-gray-600">
+                          {currentUser.full_name[0]}
+                        </div>
+                      )}
+                    </div>
+                    <span className="hidden text-sm text-gray-700 sm:inline-block">
+                      {currentUser.full_name}
+                    </span>
+                  </div>
+                )}
+                <LoginButton />
+              </div>
+            )}
           </div>
         </header>
 
