@@ -1,19 +1,27 @@
-import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import Head from "next/head";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { DailySnippet } from "~/components/DailySnippet";
 import { LoginButton } from "~/components/LoginButton";
-import { Calendar } from "~/components/Calendar";
-import { useAuth } from "~/providers/AuthProvider";
 import { strings } from "~/constants/strings";
+import { useAuth } from "~/providers/AuthProvider";
 import { supabase } from "~/lib/supabase";
+import { formatDate, isFutureDate } from "~/utils/dateTime";
 import type { Database } from "~/lib/database.types";
 
 type Team = Database["public"]["Tables"]["teams"]["Row"];
 
-export default function Home() {
+export default function SnippetPage() {
+  const router = useRouter();
   const { user, isAllowedEmail } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Parse the date from the URL
+  const { date: dateString } = router.query;
+  const date = dateString ? new Date(dateString as string) : null;
 
   useEffect(() => {
     async function fetchUserTeams() {
@@ -41,10 +49,18 @@ export default function Home() {
     void fetchUserTeams();
   }, [user?.email]);
 
+  const handleBack = () => {
+    void router.push("/");
+  };
+
+  const displayDate = date ? formatDate(date, "PPP") : "";
+
   return (
     <>
       <Head>
-        <title>{strings.app.title}</title>
+        <title>
+          {displayDate ? strings.snippet.title(displayDate) : strings.app.title}
+        </title>
         <meta name="description" content={strings.app.description} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -52,9 +68,19 @@ export default function Home() {
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 shadow-sm">
           <div className="container mx-auto flex h-16 items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">
-              {strings.app.title}
-            </h1>
+            <div className="flex items-center space-x-4">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:outline-none"
+                aria-label={strings.calendar.action.back}
+              >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+              <h1 className="text-xl font-semibold text-gray-900">
+                {strings.app.title}
+              </h1>
+            </div>
             {user && teams.length > 1 && (
               <select
                 value={selectedTeam?.team_name ?? ""}
@@ -95,10 +121,29 @@ export default function Home() {
           <main className="flex flex-1 items-center justify-center">
             <div className="text-center">{strings.app.noTeams}</div>
           </main>
+        ) : !date ? (
+          <main className="flex flex-1 items-center justify-center">
+            <div className="text-center">{strings.snippet.invalidDate}</div>
+          </main>
+        ) : isFutureDate(date) ? (
+          <main className="flex flex-1 items-center justify-center">
+            <div className="text-center">
+              {strings.snippet.validation.future}
+            </div>
+          </main>
         ) : (
           <main className="flex-1 bg-gray-50 p-8">
-            <div className="mx-auto max-w-lg">
-              <Calendar />
+            <div className="mx-auto max-w-2xl space-y-4">
+              <div className="rounded-lg bg-white p-6 shadow-sm">
+                <h2 className="mb-6 text-lg font-medium text-gray-900">
+                  {displayDate}
+                </h2>
+                <DailySnippet
+                  date={date}
+                  userEmail={user.email ?? ""}
+                  teamName={selectedTeam.team_name}
+                />
+              </div>
             </div>
           </main>
         )}

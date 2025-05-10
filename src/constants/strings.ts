@@ -27,7 +27,15 @@ export const strings = {
       previous: "이전 달",
       next: "다음 달",
     },
-    dayNames: ["일", "월", "화", "수", "목", "금", "토"],
+    week: {
+      previous: "이전 주",
+      next: "다음 주",
+    },
+    action: {
+      today: "오늘",
+      back: "캘린더로 돌아가기",
+    },
+    dayNames: ["일", "월", "화", "수", "목", "금", "토"] as const,
   },
   team: {
     select: "팀 선택",
@@ -35,6 +43,8 @@ export const strings = {
   snippet: {
     empty: "작성된 스니펫이 없습니다",
     placeholder: "오늘의 스니펫을 작성해주세요",
+    invalidDate: "잘못된 날짜입니다",
+    title: (date: string) => `${date} - GCS Daily Snippet`,
     action: {
       create: "스니펫 작성",
       edit: "스니펫 수정",
@@ -45,11 +55,16 @@ export const strings = {
       loading: "스니펫을 불러오는 중...",
       saving: "저장 중...",
       saved: "저장되었습니다",
-      error: "오류가 발생했습니다",
+      error: {
+        default: "오류가 발생했습니다",
+        withMessage: (message: string) => `오류가 발생했습니다: ${message}`,
+        dateValidation:
+          "스니펫은 오늘이거나 어제 오전 9시 이전에만 생성/수정할 수 있습니다",
+      },
     },
     validation: {
-      yesterday: "어제 스니펫은 오전 9시 이전에만 편집할 수 있습니다",
       past: "이전 스니펫은 수정할 수 없습니다",
+      future: "미래의 스니펫은 작성할 수 없습니다",
     },
   },
 } as const;

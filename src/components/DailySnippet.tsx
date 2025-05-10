@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { formatDateKR, canEditSnippet } from "../utils/dateTime";
+import { formatDate, canEditSnippetServerTime } from "../utils/dateTime";
 import { strings } from "../constants/strings";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../lib/database.types";
-import type { PostgrestSingleResponse } from "@supabase/supabase-js";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 type Snippet = Database["public"]["Tables"]["snippets"]["Row"];
 type SnippetInsert = Database["public"]["Tables"]["snippets"]["Insert"];
@@ -15,7 +15,11 @@ interface DailySnippetProps {
 }
 
 async function ensureDateString(date: Date): Promise<string> {
-  const dateStr = date.toISOString().split("T")[0];
+  const localDate = new Date(date);
+  const year = localDate.getFullYear();
+  const month = String(localDate.getMonth() + 1).padStart(2, "0");
+  const day = String(localDate.getDate()).padStart(2, "0");
+  const dateStr = `${year}-${month}-${day}`;
   if (!dateStr) throw new Error("Invalid date");
   return dateStr;
 }
@@ -34,7 +38,7 @@ const fetchSnippetById = async (
     .maybeSingle();
 
   if (error && error.code !== "PGRST116") {
-    console.error("Error fetching snippet:", error);
+    // Supabase error 객체 구조에 맞게 에러 메시지 추출
     throw error;
   }
 
@@ -62,7 +66,6 @@ const createOrUpdateSnippet = async (
     .single();
 
   if (error) {
-    console.error("Error saving snippet:", error);
     throw error;
   }
 
@@ -84,10 +87,75 @@ export const DailySnippet = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditable, setIsEditable] = useState(false);
+  const formattedDate = formatDate(date, "PPP") ?? strings.snippet.placeholder;
 
-  const isEditable = canEditSnippet(date);
-  const formattedDate =
-    formatDateKR(date, "PPP") ?? strings.snippet.placeholder;
+  useEffect(() => {
+    const checkEditPermission = async () => {
+      const canEdit = await canEditSnippetServerTime(date);
+      setIsEditable(canEdit);
+    };
+    void checkEditPermission();
+  }, [date]);
+
+  const handleEdit = () => {
+    if (!isEditable) {
+      setError(strings.snippet.validation.past);
+      return;
+    }
+    setError(null);
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setContent(snippet?.content ?? "");
+    setError(null);
+  };
+
+  const handleSave = async () => {
+    if (!content.trim()) return;
+
+    // 저장 시점에 서버 시간으로 한번 더 체크
+    const canEdit = await canEditSnippetServerTime(date);
+    if (!canEdit) {
+      setError(strings.snippet.validation.past);
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const dateStr = await ensureDateString(date);
+      const newSnippet: SnippetInsert = {
+        user_email: userEmail,
+        team_name: teamName,
+        snippet_date: dateStr,
+        content: content || null,
+      };
+
+      const savedSnippet = await createOrUpdateSnippet(newSnippet);
+      setSnippet(savedSnippet);
+      setIsEditing(false);
+    } catch (err: unknown) {
+      // PostgrestError type guard
+      const isPostgrestError = (e: unknown): e is PostgrestError =>
+        typeof e === "object" && e !== null && "code" in e;
+
+      if (isPostgrestError(err)) {
+        setError(
+          err.message || err.details || err.hint || "Unknown database error",
+        );
+      } else if (err instanceof Error) {
+        setError(err.message || "Unknown error");
+      } else {
+        setError("An unexpected error occurred");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const fetchSnippet = useCallback(async () => {
     setIsLoading(true);
@@ -102,48 +170,13 @@ export const DailySnippet = ({
         setSnippet(null);
         setContent("");
       }
-    } catch (error) {
-      console.error("Error fetching snippet:", error);
-      setError(strings.snippet.status.error);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
   }, [date, userEmail, teamName]);
-
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setContent(snippet?.content ?? "");
-  };
-
-  const handleSave = async () => {
-    if (!isEditable) return;
-
-    setIsSaving(true);
-    setError(null);
-    try {
-      const dateStr = await ensureDateString(date);
-
-      const newSnippet: SnippetInsert = {
-        user_email: userEmail,
-        team_name: teamName,
-        snippet_date: dateStr,
-        content: content || null,
-      };
-
-      const savedSnippet = await createOrUpdateSnippet(newSnippet);
-      setSnippet(savedSnippet);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Error saving snippet:", error);
-      setError(strings.snippet.status.error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   useEffect(() => {
     void fetchSnippet();
@@ -154,7 +187,15 @@ export const DailySnippet = ({
   }
 
   if (error) {
-    return <div className="text-red-500">{error}</div>;
+    return (
+      <div className="rounded-lg bg-red-50 p-4">
+        <div className="flex">
+          <div className="flex-1">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isEditing) {
@@ -162,7 +203,7 @@ export const DailySnippet = ({
       <div>
         <h2 className="mb-2 text-lg font-semibold">{formattedDate}</h2>
         <textarea
-          className="w-full rounded-lg border p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+          className="w-full rounded-lg border bg-white p-2 focus:ring-2 focus:ring-gray-500 focus:outline-none"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder={strings.snippet.placeholder}
@@ -172,7 +213,7 @@ export const DailySnippet = ({
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
+            className="rounded-lg bg-gray-900 px-4 py-2 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-500 focus:outline-none disabled:opacity-50"
           >
             {isSaving
               ? strings.snippet.status.saving
@@ -201,7 +242,7 @@ export const DailySnippet = ({
       {isEditable && (
         <button
           onClick={handleEdit}
-          className="mt-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className="mt-2 rounded-lg bg-gray-900 px-4 py-2 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-500 focus:outline-none"
         >
           {strings.snippet.action.edit}
         </button>
