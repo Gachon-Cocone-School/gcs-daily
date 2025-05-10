@@ -32,6 +32,10 @@ export const formatDate = (date: Date, formatStr: string): string => {
     });
   }
 
+  if (formatStr === "yyyy-MM-dd") {
+    return `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, "0")}-${String(localDate.getDate()).padStart(2, "0")}`;
+  }
+
   return localDate.toLocaleDateString("ko-KR");
 };
 

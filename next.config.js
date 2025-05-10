@@ -17,6 +17,13 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+
+  /**
+   * Configure allowed image domains for next/image
+   */
+  images: {
+    domains: ["lh3.googleusercontent.com"],
+  },
 };
 
 export default config;
