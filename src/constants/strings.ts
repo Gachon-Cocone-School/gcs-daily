@@ -2,6 +2,8 @@ export const strings = {
   app: {
     title: "GCS Daily Snippet",
     description: "GCS Daily Snippet",
+    loading: "로딩 중...",
+    noTeams: "소속된 팀이 없습니다. 관리자에게 문의해주세요.",
   },
   auth: {
     signIn: {
@@ -17,6 +19,37 @@ export const strings = {
     welcome: {
       message: (email: string) => `환영합니다, ${email}님`,
       authorized: "인증된 사용자입니다",
+    },
+  },
+  calendar: {
+    today: "오늘",
+    month: {
+      previous: "이전 달",
+      next: "다음 달",
+    },
+    dayNames: ["일", "월", "화", "수", "목", "금", "토"],
+  },
+  team: {
+    select: "팀 선택",
+  },
+  snippet: {
+    empty: "작성된 스니펫이 없습니다",
+    placeholder: "오늘의 스니펫을 작성해주세요",
+    action: {
+      create: "스니펫 작성",
+      edit: "스니펫 수정",
+      save: "저장",
+      cancel: "취소",
+    },
+    status: {
+      loading: "스니펫을 불러오는 중...",
+      saving: "저장 중...",
+      saved: "저장되었습니다",
+      error: "오류가 발생했습니다",
+    },
+    validation: {
+      yesterday: "어제 스니펫은 오전 9시 이전에만 편집할 수 있습니다",
+      past: "이전 스니펫은 수정할 수 없습니다",
     },
   },
 } as const;
