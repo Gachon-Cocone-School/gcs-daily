@@ -45,11 +45,14 @@ export const strings = {
     placeholder: "오늘의 스니펫을 작성해주세요",
     invalidDate: "잘못된 날짜입니다",
     title: (date: string) => `${date} - GCS Daily Snippet`,
+    editTitle: (date: string) => `${date} - 스니펫 수정`,
     action: {
-      create: "스니펫 작성",
-      edit: "스니펫 수정",
+      create: "작성",
+      edit: "수정",
       save: "저장",
       cancel: "취소",
+      write: "작성",
+      delete: "삭제",
     },
     status: {
       loading: "스니펫을 불러오는 중...",
@@ -65,6 +68,7 @@ export const strings = {
     validation: {
       past: "이전 스니펫은 수정할 수 없습니다",
       future: "미래의 스니펫은 작성할 수 없습니다",
+      deleteConfirm: "작성한 스니펫을 정말 삭제하시겠습니까?",
     },
   },
 } as const;

@@ -1,14 +1,14 @@
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import { DailySnippet } from "~/components/DailySnippet";
+import { SnippetEdit } from "~/components/SnippetEdit";
 import { LoginButton } from "~/components/LoginButton";
 import { strings } from "~/constants/strings";
 import { useAuth } from "~/providers/AuthProvider";
 import { useTeam } from "~/hooks/useTeam";
 import { formatDate, isFutureDate } from "~/utils/dateTime";
 
-export default function SnippetPage() {
+export default function SnippetEditPage() {
   const router = useRouter();
   const { user, authState } = useAuth();
   const { team } = useTeam(user?.email);
@@ -18,7 +18,15 @@ export default function SnippetPage() {
   const date = dateString ? new Date(dateString as string) : null;
 
   const handleBack = () => {
-    void router.push("/");
+    if (typeof dateString === "string") {
+      void router.push(`/snippet/${dateString}/view`);
+    }
+  };
+
+  const handleSave = () => {
+    if (typeof dateString === "string") {
+      void router.push(`/snippet/${dateString}/view`);
+    }
   };
 
   const displayDate = date ? formatDate(date, "PPP") : "";
@@ -27,7 +35,9 @@ export default function SnippetPage() {
     <>
       <Head>
         <title>
-          {displayDate ? strings.snippet.title(displayDate) : strings.app.title}
+          {displayDate
+            ? strings.snippet.editTitle(displayDate)
+            : strings.app.title}
         </title>
         <meta name="description" content={strings.app.description} />
         <link rel="icon" href="/favicon.ico" />
@@ -84,10 +94,12 @@ export default function SnippetPage() {
                 <h2 className="mb-6 text-lg font-medium text-gray-900">
                   {displayDate}
                 </h2>
-                <DailySnippet
+                <SnippetEdit
                   date={date}
                   userEmail={user.email ?? ""}
                   teamName={team.team_name}
+                  onSave={handleSave}
+                  onCancel={handleBack}
                 />
               </div>
             </div>

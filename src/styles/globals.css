@@ -1,6 +1,72 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans:
+      var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+      "Noto Color Emoji";
+  }
+}
+
+@layer components {
+  .markdown > * {
+    all: revert;
+  }
+
+  .markdown {
+    @apply text-base leading-7;
+  }
+
+  .markdown h1 {
+    @apply mt-8 mb-4 text-3xl font-bold;
+  }
+
+  .markdown h2 {
+    @apply mt-8 mb-4 text-2xl font-bold;
+  }
+
+  .markdown h3 {
+    @apply mt-6 mb-4 text-xl font-bold;
+  }
+
+  .markdown p {
+    @apply my-4;
+  }
+
+  .markdown a {
+    @apply text-blue-600 hover:underline;
+  }
+
+  .markdown ul {
+    @apply my-4 list-disc pl-6;
+  }
+
+  .markdown ol {
+    @apply my-4 list-decimal pl-6;
+  }
+
+  .markdown li {
+    @apply my-2;
+  }
+
+  .markdown blockquote {
+    @apply my-4 border-l-4 border-gray-300 pl-4 text-gray-700 italic;
+  }
+
+  .markdown code {
+    @apply rounded bg-gray-100 px-1.5 py-0.5 text-gray-900;
+  }
+
+  .markdown pre {
+    @apply my-4 overflow-x-auto rounded bg-gray-100 p-4;
+  }
+
+  .markdown pre code {
+    @apply bg-transparent p-0;
+  }
 }

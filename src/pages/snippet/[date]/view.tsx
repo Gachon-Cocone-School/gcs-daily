@@ -1,0 +1,215 @@
+import { useRouter } from "next/router";
+import Head from "next/head";
+import { useState, useEffect, useMemo } from "react";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { SnippetView } from "~/components/SnippetView";
+import { LoginButton } from "~/components/LoginButton";
+import { strings } from "~/constants/strings";
+import { useAuth } from "~/providers/AuthProvider";
+import { useTeam } from "~/hooks/useTeam";
+import { fetchTeamSnippets, deleteSnippet } from "~/utils/snippet";
+import {
+  formatDate,
+  isFutureDate,
+  canEditSnippetServerTime,
+} from "~/utils/dateTime";
+import type { Snippet } from "~/types/snippet";
+
+export default function SnippetViewPage() {
+  const router = useRouter();
+  const { user, authState } = useAuth();
+  const { team } = useTeam(user?.email);
+
+  // Parse the date from the URL
+  const { date: dateString } = router.query;
+  const date = useMemo(
+    () => (dateString ? new Date(dateString as string) : null),
+    [dateString],
+  );
+
+  // Snippets state
+  const [snippets, setSnippets] = useState<Array<Snippet>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditable, setIsEditable] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // 편집 가능 여부와 스니펫 로드
+  useEffect(() => {
+    async function loadData() {
+      if (!date || !team || !user?.email) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // 편집 가능 여부 체크
+        const canEdit = await canEditSnippetServerTime(date);
+        setIsEditable(canEdit);
+
+        // 스니펫 로드
+        const formattedDate = formatDate(date, "yyyy-MM-dd");
+        const snippets = await fetchTeamSnippets(
+          team.team_name,
+          formattedDate,
+          user.email,
+        );
+        setSnippets(snippets);
+      } catch (err) {
+        console.error("Error fetching snippets:", err);
+        setError(strings.snippet.status.error.default);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void loadData();
+  }, [date, team, user?.email]);
+
+  const handleBack = () => {
+    void router.push("/");
+  };
+
+  const handleEdit = () => {
+    if (typeof dateString === "string") {
+      void router.push(`/snippet/${dateString}/edit`);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!team || !user?.email || !date) return;
+
+    // 삭제 확인
+    if (!window.confirm(strings.snippet.validation.deleteConfirm)) {
+      return;
+    }
+
+    try {
+      const formattedDate = formatDate(date, "yyyy-MM-dd");
+      await deleteSnippet(user.email, team.team_name, formattedDate);
+      // 삭제 후 목록 다시 로드
+      void router.reload();
+    } catch (err) {
+      console.error("Error deleting snippet:", err);
+      setError(strings.snippet.status.error.default);
+    }
+  };
+
+  const displayDate = date ? formatDate(date, "PPP") : "";
+  const userSnippet = snippets.find((s) => s.user_email === user?.email);
+
+  // 버튼 렌더링 함수
+  const renderActionButtons = () => {
+    if (!isEditable) {
+      return null;
+    }
+
+    if (!userSnippet) {
+      return (
+        <button
+          onClick={handleEdit}
+          className="rounded-lg bg-gray-900 px-4 py-2 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-500 focus:outline-none"
+        >
+          {strings.snippet.action.write}
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex space-x-2">
+        <button
+          onClick={handleEdit}
+          className="rounded-lg bg-gray-900 px-4 py-2 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-500 focus:outline-none"
+        >
+          {strings.snippet.action.edit}
+        </button>
+        <button
+          onClick={handleDelete}
+          className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none"
+        >
+          {strings.snippet.action.delete}
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <Head>
+        <title>
+          {displayDate ? strings.snippet.title(displayDate) : strings.app.title}
+        </title>
+        <meta name="description" content={strings.app.description} />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <div className="flex min-h-screen flex-col">
+        <header className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 shadow-sm">
+          <div className="container mx-auto flex h-16 items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:outline-none"
+                aria-label={strings.calendar.action.back}
+              >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+              <h1 className="text-xl font-semibold text-gray-900">
+                {strings.app.title}
+              </h1>
+            </div>
+
+            <LoginButton />
+          </div>
+        </header>
+
+        {!user || authState === "denied" ? (
+          <main className="flex flex-1 items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+            <div className="text-center">
+              <h2 className="mb-8 text-3xl font-semibold text-gray-900">
+                {strings.app.title}
+              </h2>
+              <LoginButton />
+            </div>
+          </main>
+        ) : !team ? (
+          <main className="flex flex-1 items-center justify-center">
+            <div className="text-center">{strings.app.noTeams}</div>
+          </main>
+        ) : !date ? (
+          <main className="flex flex-1 items-center justify-center">
+            <div className="text-center">{strings.snippet.invalidDate}</div>
+          </main>
+        ) : isFutureDate(date) ? (
+          <main className="flex flex-1 items-center justify-center">
+            <div className="text-center">
+              {strings.snippet.validation.future}
+            </div>
+          </main>
+        ) : (
+          <main className="flex-1 bg-gray-50 p-8">
+            <div className="mx-auto max-w-2xl space-y-4">
+              <div className="rounded-lg bg-white p-6 shadow-sm">
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="text-lg font-medium text-gray-900">
+                    {displayDate}
+                  </h2>
+                  {renderActionButtons()}
+                </div>
+                {isLoading ? (
+                  <div className="text-center text-gray-500">
+                    {strings.snippet.status.loading}
+                  </div>
+                ) : error ? (
+                  <div className="text-center text-red-500">{error}</div>
+                ) : (
+                  <SnippetView snippets={snippets} />
+                )}
+              </div>
+            </div>
+          </main>
+        )}
+      </div>
+    </>
+  );
+}
