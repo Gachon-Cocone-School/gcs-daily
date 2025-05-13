@@ -24,6 +24,10 @@ import type { Tables } from "~/lib/database.types";
 
 type Snippet = Tables<"snippets">;
 
+interface SnippetExpanded extends Snippet {
+  badge: number;
+}
+
 interface CalendarProps {
   selectedDate?: Date;
 }
@@ -31,7 +35,7 @@ interface CalendarProps {
 interface DateCellProps {
   date: Date;
   isSelected?: boolean;
-  snippets?: Snippet[];
+  snippets?: SnippetExpanded[];
 }
 
 const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
@@ -39,6 +43,9 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
   const isTodayDate = isToday(date);
   const isFuture = isFutureDate(date);
   const { users } = useUsers();
+
+  // Find the first snippet with a badge
+  const badgeSnippet = snippets.find((snippet) => snippet.badge === 1);
 
   const getDateString = () => {
     const year = date.getFullYear();
@@ -62,14 +69,11 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
 
   return (
     <div
-      className={cn(
-        "date-cell flex h-full flex-col justify-between p-2 lg:p-3",
-        {
-          "cursor-pointer hover:bg-gray-50": !isFuture,
-          "cursor-default opacity-50": isFuture,
-          "bg-gray-50": isSelected,
-        },
-      )}
+      className={cn("date-cell flex h-full flex-col p-2 lg:p-3", {
+        "cursor-pointer hover:bg-gray-50": !isFuture,
+        "cursor-default opacity-50": isFuture,
+        "bg-gray-50": isSelected,
+      })}
       onClick={!isFuture ? handleClick : undefined}
       onKeyDown={!isFuture ? handleKeyDown : undefined}
       tabIndex={!isFuture ? 0 : -1}
@@ -77,33 +81,55 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
       aria-disabled={isFuture}
       aria-pressed={isSelected}
     >
-      <div className="flex flex-wrap gap-0.5">
-        {snippets?.map((snippet) => {
-          const user = users[snippet.user_email ?? ""];
-          if (!user) return null;
-
-          return (
-            <div
-              key={snippet.snippet_date + snippet.user_email}
-              className="relative h-5 w-5 overflow-hidden rounded-full"
-              title={user.full_name}
-            >
-              {user.avatar_url ? (
-                <Image
-                  src={user.avatar_url}
-                  alt={user.full_name}
-                  fill
-                  sizes="20px"
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gray-200 text-xs text-gray-600">
-                  {user.full_name[0]}
-                </div>
-              )}
+      <div className="flex flex-1 flex-col items-center justify-center gap-1">
+        {badgeSnippet && (
+          <div className="flex justify-center">
+            <div className="relative h-10 w-10">
+              <Image
+                src="/bronze_badge.svg"
+                alt={`뱃지`}
+                fill
+                sizes="40px"
+                className="object-contain"
+              />
             </div>
-          );
-        })}
+          </div>
+        )}
+        <div
+          className={cn(
+            "flex-wrap justify-center gap-0.5",
+            badgeSnippet ? "hidden lg:flex" : "flex",
+          )}
+        >
+          {snippets?.map((snippet) => {
+            const user = users[snippet.user_email ?? ""];
+            if (!user) return null;
+
+            return (
+              <div
+                key={snippet.snippet_date + snippet.user_email}
+                className="relative h-5 w-5"
+                title={user.full_name}
+              >
+                <div className="relative h-full w-full overflow-hidden rounded-full">
+                  {user.avatar_url ? (
+                    <Image
+                      src={user.avatar_url}
+                      alt={user.full_name}
+                      fill
+                      sizes="20px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gray-200 text-xs text-gray-600">
+                      {user.full_name[0]}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
       <span
         className={cn("block text-center text-sm lg:text-base", {
@@ -124,7 +150,9 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
   const isDefaultView = isInDefaultThreeWeeks(baseDate);
   const { user } = useAuth();
   const { team } = useTeam(user?.email);
-  const [snippets, setSnippets] = useState<Record<string, Snippet[]>>({});
+  const [snippetsExpanded, setSnippetsExpanded] = useState<
+    Record<string, SnippetExpanded[]>
+  >({});
 
   useEffect(() => {
     const checkCellWidth = () => {
@@ -158,7 +186,7 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
       if (!firstDay || !lastDay) return;
 
       const { data, error } = await supabase
-        .from("snippets")
+        .from("snippets_expanded")
         .select()
         .eq("team_name", team.team_name)
         .gte("snippet_date", formatDate(firstDay, "yyyy-MM-dd"))
@@ -170,18 +198,17 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
         return;
       }
 
-      // 날짜별로 스니펫 그룹화
-      const groupedSnippets = data.reduce<Record<string, Snippet[]>>(
-        (acc, snippet) => {
-          const date = snippet.snippet_date;
-          acc[date] ??= [];
-          acc[date].push(snippet);
-          return acc;
-        },
-        {},
-      );
+      // Group snippets by date
+      const groupedSnippets = (data as SnippetExpanded[]).reduce<
+        Record<string, SnippetExpanded[]>
+      >((acc, snippet) => {
+        const dateStr = snippet.snippet_date;
+        acc[dateStr] ??= [];
+        acc[dateStr].push(snippet);
+        return acc;
+      }, {});
 
-      setSnippets(groupedSnippets);
+      setSnippetsExpanded(groupedSnippets);
     }
 
     void fetchSnippets();
@@ -253,7 +280,7 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
       <div
         className={cn(
           "relative w-full",
-          "sm:w-[640px] lg:w-[768px] xl:w-[900px]",
+          "sm:w-[640px] lg:w-[720px] xl:w-[800px]",
           {
             "aspect-square": aspectRatio === "lg",
             "aspect-[1/1.5]": aspectRatio === "md",
@@ -329,7 +356,7 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
                       isSelected={
                         selectedDate?.toDateString() === date.toDateString()
                       }
-                      snippets={snippets[dateStr]}
+                      snippets={snippetsExpanded[dateStr]}
                     />
                   );
                 })}
