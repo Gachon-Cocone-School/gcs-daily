@@ -1,6 +1,6 @@
 export const strings = {
   app: {
-    title: "GCS Daily Snippet",
+    title: "Daily Snippet",
     description: "GCS Daily Snippet",
     loading: "로딩 중...",
     noTeams: "소속된 팀이 없습니다. 관리자에게 문의해주세요.",

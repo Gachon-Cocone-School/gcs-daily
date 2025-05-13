@@ -20,7 +20,16 @@ export default function Home() {
       <Head>
         <title>{strings.app.title}</title>
         <meta name="description" content={strings.app.description} />
-        <link rel="icon" href="/favicon.ico" />
+        <link
+          rel="icon"
+          href="/gcs-logo-light.png"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          rel="icon"
+          href="/gcs-logo-dark.png"
+          media="(prefers-color-scheme: dark)"
+        />
       </Head>
 
       <div className="flex min-h-screen flex-col">
