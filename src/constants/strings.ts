@@ -4,6 +4,11 @@ export const strings = {
     description: "GCS Daily Snippet",
     loading: "로딩 중...",
     noTeams: "소속된 팀이 없습니다. 관리자에게 문의해주세요.",
+    status: {
+      initializing: "초기화 중...",
+      checking: "권한 확인 중...",
+      loadingTeam: "팀 정보 로딩 중...",
+    },
   },
   auth: {
     signIn: {

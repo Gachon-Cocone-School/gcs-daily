@@ -4,14 +4,16 @@ import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { SnippetEdit } from "~/components/SnippetEdit";
 import { LoginButton } from "~/components/LoginButton";
 import { strings } from "~/constants/strings";
+import AuthGuard from "~/components/AuthGuard";
+import Loading from "~/components/Loading";
 import { useAuth } from "~/providers/AuthProvider";
-import { useTeam } from "~/hooks/useTeam";
+import { useTeam } from "~/providers/TeamProvider";
 import { formatDate, isFutureDate } from "~/utils/dateTime";
 
 export default function SnippetEditPage() {
   const router = useRouter();
-  const { user, authState } = useAuth();
-  const { team } = useTeam(user?.email);
+  const { user } = useAuth();
+  const { team, loading: teamLoading } = useTeam();
 
   // Parse the date from the URL
   const { date: dateString } = router.query;
@@ -32,7 +34,7 @@ export default function SnippetEditPage() {
   const displayDate = date ? formatDate(date, "PPP") : "";
 
   return (
-    <>
+    <AuthGuard>
       <Head>
         <title>
           {displayDate
@@ -64,48 +66,43 @@ export default function SnippetEditPage() {
           </div>
         </header>
 
-        {!user || authState === "denied" ? (
-          <main className="flex flex-1 items-center justify-center bg-gradient-to-b from-gray-50 to-white">
-            <div className="text-center">
-              <h2 className="mb-8 text-3xl font-semibold text-gray-900">
-                {strings.app.title}
-              </h2>
-              <LoginButton />
+        <main className="flex-1 bg-gray-50">
+          {teamLoading ? (
+            <Loading message={strings.app.status.loadingTeam} />
+          ) : !team ? (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">{strings.app.noTeams}</div>
             </div>
-          </main>
-        ) : !team ? (
-          <main className="flex flex-1 items-center justify-center">
-            <div className="text-center">{strings.app.noTeams}</div>
-          </main>
-        ) : !date ? (
-          <main className="flex flex-1 items-center justify-center">
-            <div className="text-center">{strings.snippet.invalidDate}</div>
-          </main>
-        ) : isFutureDate(date) ? (
-          <main className="flex flex-1 items-center justify-center">
-            <div className="text-center">
-              {strings.snippet.validation.future}
+          ) : !date ? (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">{strings.snippet.invalidDate}</div>
             </div>
-          </main>
-        ) : (
-          <main className="flex-1 bg-gray-50 p-8">
-            <div className="mx-auto max-w-2xl space-y-4">
-              <div className="rounded-lg bg-white p-6 shadow-sm">
-                <h2 className="mb-6 text-lg font-medium text-gray-900">
-                  {displayDate}
-                </h2>
-                <SnippetEdit
-                  date={date}
-                  userEmail={user.email ?? ""}
-                  teamName={team.team_name}
-                  onSave={handleSave}
-                  onCancel={handleBack}
-                />
+          ) : isFutureDate(date) ? (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">
+                {strings.snippet.validation.future}
               </div>
             </div>
-          </main>
-        )}
+          ) : (
+            <div className="p-8">
+              <div className="mx-auto max-w-2xl space-y-4">
+                <div className="rounded-lg bg-white p-6 shadow-sm">
+                  <h2 className="mb-6 text-lg font-medium text-gray-900">
+                    {displayDate}
+                  </h2>
+                  <SnippetEdit
+                    date={date}
+                    userEmail={user?.email ?? ""}
+                    teamName={team.team_name}
+                    onSave={handleSave}
+                    onCancel={handleBack}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
-    </>
+    </AuthGuard>
   );
 }

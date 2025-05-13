@@ -5,7 +5,7 @@ import {
   useState,
   useCallback,
 } from "react";
-import { User } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "~/lib/supabase";
 
 type AuthState = "initializing" | "checking" | "allowed" | "denied";
@@ -19,6 +19,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   authState: "initializing",
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   signOut: async () => {},
 });
 
@@ -43,7 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq("email", email)
         .single();
 
-      setAuthState(data ? "allowed" : "denied");
+      const newState = data ? "allowed" : "denied";
+      setAuthState(newState);
     } catch (error) {
       console.error("Error checking allowed email:", error);
       setAuthState("denied");
@@ -55,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       if (!session?.user) {
-        setAuthState("initializing");
+        setAuthState("denied");
         return;
       }
 
@@ -65,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    // Initial session check
     void supabase.auth
       .getSession()
       .then(async ({ data: { session } }) => {
@@ -74,12 +77,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error getting auth session:", error);
         setAuthState("denied");
       });
+
+    // Subscribe to auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_, session) => {
+      await updateAuthState(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [updateAuthState]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    setAuthState("initializing");
+    setAuthState("denied");
   };
 
   return (

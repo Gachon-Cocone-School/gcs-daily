@@ -6,8 +6,10 @@ import { useSwipeable } from "react-swipeable";
 import { SnippetView } from "~/components/SnippetView";
 import { LoginButton } from "~/components/LoginButton";
 import { strings } from "~/constants/strings";
+import AuthGuard from "~/components/AuthGuard";
+import Loading from "~/components/Loading";
 import { useAuth } from "~/providers/AuthProvider";
-import { useTeam } from "~/hooks/useTeam";
+import { useTeam } from "~/providers/TeamProvider";
 import { fetchTeamSnippets, deleteSnippet } from "~/utils/snippet";
 import {
   formatDate,
@@ -20,8 +22,8 @@ import type { Snippet } from "~/types/snippet";
 
 export default function SnippetViewPage() {
   const router = useRouter();
-  const { user, authState } = useAuth();
-  const { team } = useTeam(user?.email);
+  const { user } = useAuth();
+  const { team, loading: teamLoading } = useTeam();
 
   // Parse the date from the URL
   const { date: dateString } = router.query;
@@ -77,7 +79,7 @@ export default function SnippetViewPage() {
       void router.push(`/snippet/${dateString}/edit`);
     }
   };
-  
+
   const handlePreviousDay = () => {
     if (date) {
       const newDate = new Date(date);
@@ -133,7 +135,6 @@ export default function SnippetViewPage() {
     swipeDuration: 500,
   });
 
-  // 버튼 렌더링 함수
   const renderActionButtons = () => {
     if (!isEditable) {
       return null;
@@ -169,7 +170,7 @@ export default function SnippetViewPage() {
   };
 
   return (
-    <>
+    <AuthGuard>
       <Head>
         <title>
           {displayDate ? strings.snippet.title(displayDate) : strings.app.title}
@@ -199,75 +200,70 @@ export default function SnippetViewPage() {
           </div>
         </header>
 
-        {!user || authState === "denied" ? (
-          <main className="flex flex-1 items-center justify-center bg-gradient-to-b from-gray-50 to-white">
-            <div className="text-center">
-              <h2 className="mb-8 text-3xl font-semibold text-gray-900">
-                {strings.app.title}
-              </h2>
-              <LoginButton />
+        <main className="flex-1 bg-gray-50">
+          {teamLoading ? (
+            <Loading message={strings.app.status.loadingTeam} />
+          ) : !team ? (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">{strings.app.noTeams}</div>
             </div>
-          </main>
-        ) : !team ? (
-          <main className="flex flex-1 items-center justify-center">
-            <div className="text-center">{strings.app.noTeams}</div>
-          </main>
-        ) : !date ? (
-          <main className="flex flex-1 items-center justify-center">
-            <div className="text-center">{strings.snippet.invalidDate}</div>
-          </main>
-        ) : isFutureDate(date) ? (
-          <main className="flex flex-1 items-center justify-center">
-            <div className="text-center">
-              {strings.snippet.validation.future}
+          ) : !date ? (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">{strings.snippet.invalidDate}</div>
             </div>
-          </main>
-        ) : (
-          <main className="flex-1 bg-gray-50 p-8" {...swipeHandlers}>
-            <div className="mx-auto max-w-2xl space-y-4">
-              <div className="rounded-lg bg-white p-6 shadow-sm">
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={handlePreviousDay}
-                      className="rounded-lg p-2 text-gray-600 hover:bg-gray-50 active:bg-gray-100"
-                      aria-label="이전 날짜"
-                    >
-                      <ChevronLeftIcon className="h-5 w-5" />
-                    </button>
-                    <h2 className="text-lg font-medium text-gray-900">
-                      {displayDate}
-                    </h2>
-                    <button
-                      type="button"
-                      onClick={handleNextDay}
-                      className={cn(
-                        "rounded-lg p-2 text-gray-600",
-                        isToday(date) ? "cursor-not-allowed opacity-50" : "hover:bg-gray-50 active:bg-gray-100",
-                      )}
-                      disabled={date ? isToday(date) : false}
-                      aria-label="다음 날짜"
-                    >
-                      <ChevronRightIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                  {renderActionButtons()}
-                </div>
-                {isLoading ? (
-                  <div className="text-center text-gray-500">
-                    {strings.snippet.status.loading}
-                  </div>
-                ) : error ? (
-                  <div className="text-center text-red-500">{error}</div>
-                ) : (
-                  <SnippetView snippets={snippets} />
-                )}
+          ) : isFutureDate(date) ? (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">
+                {strings.snippet.validation.future}
               </div>
             </div>
-          </main>
-        )}
+          ) : (
+            <div className="p-8" {...swipeHandlers}>
+              <div className="mx-auto max-w-2xl space-y-4">
+                <div className="rounded-lg bg-white p-6 shadow-sm">
+                  <div className="mb-6 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={handlePreviousDay}
+                        className="rounded-lg p-2 text-gray-600 hover:bg-gray-50 active:bg-gray-100"
+                        aria-label="이전 날짜"
+                      >
+                        <ChevronLeftIcon className="h-5 w-5" />
+                      </button>
+                      <h2 className="text-lg font-medium text-gray-900">
+                        {displayDate}
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={handleNextDay}
+                        className={cn(
+                          "rounded-lg p-2 text-gray-600",
+                          isToday(date)
+                            ? "cursor-not-allowed opacity-50"
+                            : "hover:bg-gray-50 active:bg-gray-100",
+                        )}
+                        disabled={date ? isToday(date) : false}
+                        aria-label="다음 날짜"
+                      >
+                        <ChevronRightIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                    {renderActionButtons()}
+                  </div>
+                  {isLoading ? (
+                    <Loading message={strings.snippet.status.loading} />
+                  ) : error ? (
+                    <div className="text-center text-red-500">{error}</div>
+                  ) : (
+                    <SnippetView snippets={snippets} />
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
-    </>
+    </AuthGuard>
   );
 }

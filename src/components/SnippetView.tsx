@@ -26,7 +26,10 @@ export function SnippetView({ snippets = [] }: Props) {
       {snippets.map((snippet: Snippet) => {
         const user = users[snippet.user_email];
         return (
-          <div key={snippet.id} className="rounded-lg bg-white p-4 shadow-sm">
+          <div
+            key={snippet.user_email + snippet.snippet_date}
+            className="rounded-lg bg-white p-4 shadow-sm"
+          >
             <div className="mb-3 flex items-center gap-x-3">
               {user?.avatar_url && (
                 <Image

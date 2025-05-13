@@ -3,13 +3,13 @@ import Image from "next/image";
 import { LoginButton } from "~/components/LoginButton";
 import { Calendar } from "~/components/Calendar";
 import { useAuth } from "~/providers/AuthProvider";
-import { useTeam } from "~/hooks/useTeam";
-import { useUsers } from "~/hooks/useUsers";
+import { useTeam } from "~/providers/TeamProvider";
+import { useUsers } from "~/providers/UserProvider";
 import { strings } from "~/constants/strings";
 
 export default function Home() {
   const { user, authState } = useAuth();
-  const { team } = useTeam(user?.email);
+  const { team, loading: teamLoading } = useTeam();
   const { users } = useUsers();
   const currentUser = user?.email ? users[user.email] : null;
 
@@ -64,6 +64,20 @@ export default function Home() {
                 {strings.app.title}
               </h2>
               <LoginButton />
+            </div>
+          </main>
+        ) : authState === "initializing" || authState === "checking" ? (
+          <main className="flex flex-1 items-center justify-center">
+            <div className="space-y-4 text-center">
+              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
+              <p className="text-gray-600">{strings.app.status[authState]}</p>
+            </div>
+          </main>
+        ) : teamLoading ? (
+          <main className="flex flex-1 items-center justify-center">
+            <div className="space-y-4 text-center">
+              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
+              <p className="text-gray-600">{strings.app.status.loadingTeam}</p>
             </div>
           </main>
         ) : !team ? (

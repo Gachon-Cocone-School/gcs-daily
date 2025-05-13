@@ -6,11 +6,14 @@ type Team = Database["public"]["Tables"]["teams"]["Row"];
 
 export function useTeam(userEmail: string | undefined | null) {
   const [team, setTeam] = useState<Team | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchUserTeam() {
+      setLoading(true);
       if (!userEmail) {
         setTeam(null);
+        setLoading(false);
         return;
       }
 
@@ -23,14 +26,16 @@ export function useTeam(userEmail: string | undefined | null) {
       if (error) {
         console.error("Error fetching team:", error);
         setTeam(null);
+        setLoading(false);
         return;
       }
 
       setTeam(userTeams);
+      setLoading(false);
     }
 
     void fetchUserTeam();
   }, [userEmail]);
 
-  return { team };
+  return { team, loading };
 }
