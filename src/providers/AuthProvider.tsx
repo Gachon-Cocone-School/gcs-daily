@@ -1,14 +1,9 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
+import { createContext, useContext, useEffect, useCallback } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "~/lib/supabase";
+import { useAuthStore } from "~/stores/authStore";
 
 type AuthState = "initializing" | "checking" | "allowed" | "denied";
 
@@ -30,34 +25,15 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [authState, setAuthState] = useState<AuthState>("initializing");
-  const [hasCheckedPermission, setHasCheckedPermission] = useState(false);
-
-  const checkAllowedEmail = async (email: string | undefined) => {
-    if (!email) {
-      setAuthState("denied");
-      return;
-    }
-
-    setAuthState("checking");
-
-    try {
-      const { data } = await supabase
-        .from("allowed_emails")
-        .select("email")
-        .eq("email", email)
-        .single();
-
-      const newState = data ? "allowed" : "denied";
-      setAuthState(newState);
-    } catch (error) {
-      console.error("Error checking allowed email:", error);
-      setAuthState("denied");
-    } finally {
-      setHasCheckedPermission(true);
-    }
-  };
+  const {
+    user,
+    authState,
+    hasCheckedPermission,
+    setUser,
+    setAuthState,
+    checkAllowedEmail,
+    setHasCheckedPermission,
+  } = useAuthStore();
 
   const updateAuthState = useCallback(
     async (session: { user: User | null } | null) => {
@@ -71,10 +47,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Only check permissions if we haven't checked before
       if (!hasCheckedPermission) {
-        await checkAllowedEmail(session.user.email);
+        await checkAllowedEmail(session.user.email ?? "");
       }
     },
-    [hasCheckedPermission],
+    [
+      hasCheckedPermission,
+      setUser,
+      setAuthState,
+      setHasCheckedPermission,
+      checkAllowedEmail,
+    ],
   );
 
   useEffect(() => {
@@ -103,17 +85,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [updateAuthState]);
+  }, [updateAuthState, setAuthState, setHasCheckedPermission]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setAuthState("denied");
-    setHasCheckedPermission(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, authState, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        authState,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
