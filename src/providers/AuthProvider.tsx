@@ -19,8 +19,10 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   authState: "initializing",
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  signOut: async () => {},
+  signOut: async () => {
+    // Default empty implementation
+    return Promise.resolve();
+  },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -28,6 +30,7 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authState, setAuthState] = useState<AuthState>("initializing");
+  const [hasCheckedPermission, setHasCheckedPermission] = useState(false);
 
   const checkAllowedEmail = async (email: string | undefined) => {
     if (!email) {
@@ -49,6 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Error checking allowed email:", error);
       setAuthState("denied");
+    } finally {
+      setHasCheckedPermission(true);
     }
   };
 
@@ -58,12 +63,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!session?.user) {
         setAuthState("denied");
+        setHasCheckedPermission(false);
         return;
       }
 
-      await checkAllowedEmail(session.user.email);
+      // Only check permissions if we haven't checked before
+      if (!hasCheckedPermission) {
+        await checkAllowedEmail(session.user.email);
+      }
     },
-    [],
+    [hasCheckedPermission],
   );
 
   useEffect(() => {
@@ -81,7 +90,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Subscribe to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Reset permission check on sign-in or sign-out
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        setHasCheckedPermission(false);
+      }
       await updateAuthState(session);
     });
 
@@ -94,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setAuthState("denied");
+    setHasCheckedPermission(false);
   };
 
   return (
