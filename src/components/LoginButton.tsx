@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "~/providers/AuthProvider";
 import { supabase } from "~/lib/supabase";
 import { useState } from "react";

@@ -1,3 +1,5 @@
+"use client";
+
 import { useRouter } from "next/router";
 import React, { useState, useEffect, useCallback } from "react";
 import type { FC } from "react";

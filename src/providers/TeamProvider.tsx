@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext } from "react";
 import useSWR from "swr";
 import { useAuth } from "./AuthProvider";

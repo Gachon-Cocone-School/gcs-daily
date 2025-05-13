@@ -1,3 +1,5 @@
+"use client";
+
 import { type AppType } from "next/app";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "~/providers/AuthProvider";

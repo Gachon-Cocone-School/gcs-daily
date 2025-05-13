@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "~/providers/AuthProvider";

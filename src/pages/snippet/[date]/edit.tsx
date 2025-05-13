@@ -1,3 +1,5 @@
+"use client";
+
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
