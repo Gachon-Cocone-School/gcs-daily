@@ -42,7 +42,9 @@ export const strings = {
   },
   snippet: {
     empty: "작성된 스니펫이 없습니다",
-    placeholder: "오늘의 스니펫을 작성해주세요",
+    placeholderDefault:
+      "오늘의 스니펫을 작성해주세요. \n\n 마크다운 문법을 사용할 수 있습니다\n\n# 제목 (# ~ ######)\n* 또는 - 불릿 목록\n1. 2. 3. 숫자 목록\n[링크 텍스트](URL)\n![이미지 설명](이미지 URL)\n`코드 블록`\n**굵게** 또는 *기울임*\n",
+    placeholder: "탭키를 누르면 제안된 스니펫이 적용됩니다\n\n",
     invalidDate: "잘못된 날짜입니다",
     title: (date: string) => `${date} - GCS Daily Snippet`,
     editTitle: (date: string) => `${date} - 스니펫 수정`,

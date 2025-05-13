@@ -1,7 +1,8 @@
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { useSwipeable } from "react-swipeable";
 import { SnippetView } from "~/components/SnippetView";
 import { LoginButton } from "~/components/LoginButton";
 import { strings } from "~/constants/strings";
@@ -12,7 +13,9 @@ import {
   formatDate,
   isFutureDate,
   canEditSnippetServerTime,
+  isToday,
 } from "~/utils/dateTime";
+import { cn } from "~/utils/cn";
 import type { Snippet } from "~/types/snippet";
 
 export default function SnippetViewPage() {
@@ -74,6 +77,22 @@ export default function SnippetViewPage() {
       void router.push(`/snippet/${dateString}/edit`);
     }
   };
+  
+  const handlePreviousDay = () => {
+    if (date) {
+      const newDate = new Date(date);
+      newDate.setDate(date.getDate() - 1);
+      void router.push(`/snippet/${formatDate(newDate, "yyyy-MM-dd")}/view`);
+    }
+  };
+
+  const handleNextDay = () => {
+    if (date && !isToday(date)) {
+      const newDate = new Date(date);
+      newDate.setDate(date.getDate() + 1);
+      void router.push(`/snippet/${formatDate(newDate, "yyyy-MM-dd")}/view`);
+    }
+  };
 
   const handleDelete = async () => {
     if (!team || !user?.email || !date) return;
@@ -96,6 +115,23 @@ export default function SnippetViewPage() {
 
   const displayDate = date ? formatDate(date, "PPP") : "";
   const userSnippet = snippets.find((s) => s.user_email === user?.email);
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (date && !isToday(date)) {
+        handleNextDay();
+      }
+    },
+    onSwipedRight: () => {
+      if (date) {
+        handlePreviousDay();
+      }
+    },
+    preventScrollOnSwipe: true,
+    trackMouse: false,
+    delta: 50,
+    swipeDuration: 500,
+  });
 
   // 버튼 렌더링 함수
   const renderActionButtons = () => {
@@ -187,13 +223,35 @@ export default function SnippetViewPage() {
             </div>
           </main>
         ) : (
-          <main className="flex-1 bg-gray-50 p-8">
+          <main className="flex-1 bg-gray-50 p-8" {...swipeHandlers}>
             <div className="mx-auto max-w-2xl space-y-4">
               <div className="rounded-lg bg-white p-6 shadow-sm">
                 <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-lg font-medium text-gray-900">
-                    {displayDate}
-                  </h2>
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={handlePreviousDay}
+                      className="rounded-lg p-2 text-gray-600 hover:bg-gray-50 active:bg-gray-100"
+                      aria-label="이전 날짜"
+                    >
+                      <ChevronLeftIcon className="h-5 w-5" />
+                    </button>
+                    <h2 className="text-lg font-medium text-gray-900">
+                      {displayDate}
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={handleNextDay}
+                      className={cn(
+                        "rounded-lg p-2 text-gray-600",
+                        isToday(date) ? "cursor-not-allowed opacity-50" : "hover:bg-gray-50 active:bg-gray-100",
+                      )}
+                      disabled={date ? isToday(date) : false}
+                      aria-label="다음 날짜"
+                    >
+                      <ChevronRightIcon className="h-5 w-5" />
+                    </button>
+                  </div>
                   {renderActionButtons()}
                 </div>
                 {isLoading ? (

@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import React, { useState, useEffect } from "react";
 import type { FC } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { useSwipeable } from "react-swipeable";
 import { strings } from "~/constants/strings";
 import { cn } from "~/utils/cn";
 import {
@@ -217,16 +218,39 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
   const weeks = getThreeWeeksCalendarDays(baseDate);
   const weekLabel = formatDate(baseDate, "yyyy년 MM월");
 
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (!isDefaultView) {
+        handleNextWeek();
+      }
+    },
+    onSwipedRight: () => {
+      handlePreviousWeek();
+    },
+    preventScrollOnSwipe: true,
+    trackMouse: false,
+    delta: 50, // Minimum swipe distance required (in px)
+    swipeDuration: 500, // Maximum time to swipe (in ms)
+  });
+
+  const { ref: swipeRef, ...swipeProps } = swipeHandlers;
+  const attachRef = (el: HTMLDivElement | null) => {
+    swipeRef(el);
+    calendarRef.current = el;
+  };
+
   return (
     <div
-      ref={calendarRef}
       className={cn("mx-auto w-full max-w-screen-sm", {
         "aspect-square": aspectRatio === "lg",
         "aspect-[1/1.3]": aspectRatio === "md",
         "aspect-[1/1.6]": aspectRatio === "sm",
       })}
     >
-      <div className="flex h-full flex-col overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-gray-200">
+      <div
+        ref={attachRef}
+        {...swipeProps}
+        className="flex h-full flex-col overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-gray-200">
         <div className="px-5 py-4">
           <div className="flex items-center justify-center gap-4">
             <button

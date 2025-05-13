@@ -69,6 +69,30 @@ export async function fetchTeamSnippets(
   return data || [];
 }
 
+export async function fetchPreviousSnippet(
+  userEmail: string,
+  teamName: string,
+  date: Date,
+): Promise<Snippet | null> {
+  const dateStr = await ensureDateString(date);
+
+  const { data, error } = await supabase
+    .from("snippets")
+    .select()
+    .eq("user_email", userEmail)
+    .eq("team_name", teamName)
+    .lt("snippet_date", dateStr)
+    .order("snippet_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") {
+    throw error;
+  }
+
+  return data;
+}
+
 export async function createOrUpdateSnippet(
   snippet: SnippetInsert,
 ): Promise<Snippet> {

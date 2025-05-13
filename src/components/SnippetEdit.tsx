@@ -7,6 +7,7 @@ import {
   fetchSnippetById,
   ensureDateString,
   createOrUpdateSnippet,
+  fetchPreviousSnippet,
 } from "~/utils/snippet";
 import { strings } from "~/constants/strings";
 import type { Snippet, SnippetEditProps } from "~/types/snippet";
@@ -21,6 +22,7 @@ export const SnippetEdit = ({
 }: SnippetEditProps) => {
   const [content, setContent] = useState("");
   const [snippet, setSnippet] = useState<Snippet | null>(null);
+  const [previousContent, setPreviousContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,9 +46,37 @@ export const SnippetEdit = ({
     }
   }, [date, userEmail, teamName]);
 
+  const fetchPreviousSnippetContent = useCallback(async () => {
+    try {
+      const previousSnippet = await fetchPreviousSnippet(
+        userEmail,
+        teamName,
+        date,
+      );
+      // 명시적으로 이전 스니펫이 없는 경우 처리
+      if (!previousSnippet) {
+        setPreviousContent(null);
+        return;
+      }
+      // 이전 스니펫은 있지만 내용이 없는 경우도 명시적으로 처리
+      setPreviousContent(previousSnippet.content ?? null);
+    } catch (err) {
+      console.error("Error fetching previous snippet:", err);
+      setPreviousContent(null);
+    }
+  }, [date, userEmail, teamName]);
+
   useEffect(() => {
     void fetchSnippet();
-  }, [fetchSnippet]);
+    void fetchPreviousSnippetContent();
+  }, [fetchSnippet, fetchPreviousSnippetContent]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Tab" && !e.shiftKey && previousContent && !content) {
+      e.preventDefault();
+      setContent(previousContent);
+    }
+  };
 
   const handleCancel = () => {
     setContent(snippet?.content ?? "");
@@ -154,7 +184,12 @@ export const SnippetEdit = ({
             className="h-full w-full resize-none rounded-lg border bg-white p-2 focus:ring-2 focus:ring-gray-500 focus:outline-none"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={strings.snippet.placeholder}
+            onKeyDown={handleKeyDown}
+            placeholder={
+              previousContent
+                ? `${strings.snippet.placeholder}${previousContent}`
+                : strings.snippet.placeholderDefault
+            }
             rows={20}
           />
         )}
