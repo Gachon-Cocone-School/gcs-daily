@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect, useCallback } from "react";
 import type { FC } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
@@ -49,14 +49,14 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
 
   const handleClick = () => {
     if (!isFuture) {
-      void router.push(`/snippet/${getDateString()}`);
+      router.push(`/snippet/${getDateString()}`);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isFuture && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
-      void router.push(`/snippet/${getDateString()}`);
+      router.push(`/snippet/${getDateString()}`);
     }
   };
 
@@ -249,87 +249,93 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
   );
 
   return (
-    <div
-      className={cn("mx-auto w-full max-w-screen-sm", {
-        "aspect-square": aspectRatio === "lg",
-        "aspect-[1/1.3]": aspectRatio === "md",
-        "aspect-[1/1.6]": aspectRatio === "sm",
-      })}
-    >
+    <div className="flex w-full justify-center">
       <div
-        ref={combinedRef}
-        {...swipeableProps}
-        className="flex h-full flex-col overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-gray-200"
+        className={cn(
+          "relative w-full",
+          "sm:w-[640px] lg:w-[768px] xl:w-[900px]",
+          {
+            "aspect-square": aspectRatio === "lg",
+            "aspect-[1/1.5]": aspectRatio === "md",
+            "aspect-[1/2.0]": aspectRatio === "sm",
+          },
+        )}
       >
-        <div className="px-5 py-4">
-          <div className="flex items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={handlePreviousWeek}
-              className="rounded-lg p-2 text-gray-600 hover:bg-gray-50 active:bg-gray-100"
-              aria-label={strings.calendar.week.previous}
-            >
-              <ChevronLeftIcon className="h-5 w-5" />
-            </button>
-            <div className="flex items-center gap-2">
-              <span className="text-base font-semibold text-gray-900">
-                {weekLabel}
-              </span>
+        <div
+          ref={combinedRef}
+          {...swipeableProps}
+          className="flex h-full flex-col overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-gray-200"
+        >
+          <div className="px-5 py-4">
+            <div className="flex items-center justify-center gap-4">
               <button
                 type="button"
-                onClick={handleTodayClick}
+                onClick={handlePreviousWeek}
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-50 active:bg-gray-100"
+                aria-label={strings.calendar.week.previous}
+              >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold text-gray-900">
+                  {weekLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleTodayClick}
+                  className={cn(
+                    "rounded-lg px-3 py-1 text-sm font-medium",
+                    isDefaultView
+                      ? "cursor-not-allowed bg-gray-50 text-gray-400"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                  )}
+                  disabled={isDefaultView}
+                >
+                  {strings.calendar.action.today}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={handleNextWeek}
                 className={cn(
-                  "rounded-lg px-3 py-1 text-sm font-medium",
+                  "rounded-lg p-2 text-gray-600",
                   isDefaultView
-                    ? "cursor-not-allowed bg-gray-50 text-gray-400"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                    ? "cursor-not-allowed opacity-50"
+                    : "hover:bg-gray-50 active:bg-gray-100",
                 )}
                 disabled={isDefaultView}
+                aria-label={strings.calendar.week.next}
               >
-                {strings.calendar.action.today}
+                <ChevronRightIcon className="h-5 w-5" />
               </button>
             </div>
-            <button
-              type="button"
-              onClick={handleNextWeek}
-              className={cn(
-                "rounded-lg p-2 text-gray-600",
-                isDefaultView
-                  ? "cursor-not-allowed opacity-50"
-                  : "hover:bg-gray-50 active:bg-gray-100",
-              )}
-              disabled={isDefaultView}
-              aria-label={strings.calendar.week.next}
-            >
-              <ChevronRightIcon className="h-5 w-5" />
-            </button>
           </div>
-        </div>
-        <div className="grid grid-cols-7 border-t border-b border-gray-200 bg-white text-center text-xs font-semibold text-gray-600">
-          {strings.calendar.dayNames.map((day) => (
-            <div key={day} className="py-2">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="grid flex-1 grid-cols-7 divide-x divide-y divide-gray-200">
-          {weeks.map((week, weekIndex) => (
-            <React.Fragment key={weekIndex}>
-              {week.map((date) => {
-                const dateStr = formatDate(date, "yyyy-MM-dd");
-                return (
-                  <DateCell
-                    key={dateStr}
-                    date={date}
-                    isSelected={
-                      selectedDate?.toDateString() === date.toDateString()
-                    }
-                    snippets={snippets[dateStr]}
-                  />
-                );
-              })}
-            </React.Fragment>
-          ))}
+          <div className="grid grid-cols-7 border-t border-b border-gray-200 bg-white text-center text-xs font-semibold text-gray-600">
+            {strings.calendar.dayNames.map((day) => (
+              <div key={day} className="py-2">
+                {day}
+              </div>
+            ))}
+          </div>
+          <div className="grid flex-1 grid-cols-7 divide-x divide-y divide-gray-200">
+            {weeks.map((week, weekIndex) => (
+              <React.Fragment key={weekIndex}>
+                {week.map((date) => {
+                  const dateStr = formatDate(date, "yyyy-MM-dd");
+                  return (
+                    <DateCell
+                      key={dateStr}
+                      date={date}
+                      isSelected={
+                        selectedDate?.toDateString() === date.toDateString()
+                      }
+                      snippets={snippets[dateStr]}
+                    />
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </div>
         </div>
       </div>
     </div>

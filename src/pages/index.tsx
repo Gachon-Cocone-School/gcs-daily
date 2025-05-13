@@ -88,9 +88,7 @@ export default function Home() {
           </main>
         ) : (
           <main className="flex-1 bg-gray-50 p-8">
-            <div className="mx-auto max-w-lg">
-              <Calendar />
-            </div>
+            <Calendar />
           </main>
         )}
       </div>
