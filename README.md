@@ -1,29 +1,90 @@
-# Create T3 App
+# GCS Daily Snippet
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+일일 스니펫을 효율적으로 관리하기 위한 웹 애플리케이션입니다.
 
-## What's next? How do I make an app with this?
+## 주요 기능
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- 📝 일일 스니펫 작성 및 조회
+- 👥 팀 기반 접근 제어
+- 📅 3주 캘린더 뷰
+- ✨ 마크다운 에디터와 미리보기
+- 📱 모바일 반응형 디자인
+- 🔒 구글 계정 기반 인증
+- 🕒 날짜 기반 편집 제한
+- 📊 스니펫 히스토리 관리
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## 기술 스택
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- **Frontend**
+  - Next.js 15
+  - React 19
+  - TypeScript
+  - TailwindCSS
+  - SWR
 
-## Learn More
+- **Backend**
+  - Supabase
+    - 인증
+    - 데이터베이스
+    - 실시간 업데이트
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+- **개발 도구**
+  - ESLint
+  - Prettier
+  - TypeScript
+  - Turbopack
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+## 개발 환경 설정
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+1. 저장소 클론
+```bash
+git clone [repository-url]
+cd gcs-daily-snippet
+```
 
-## How do I deploy this?
+2. 의존성 설치
+```bash
+npm install
+```
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+3. 환경 변수 설정
+```bash
+cp .env.example .env.local
+```
+`.env.local` 파일을 수정하여 필요한 환경 변수를 설정합니다.
+
+4. 개발 서버 실행
+```bash
+npm run dev
+```
+
+## 사용 가능한 스크립트
+
+- `npm run dev` - 개발 서버 실행 (Turbopack)
+- `npm run build` - 프로덕션 빌드
+- `npm run start` - 프로덕션 서버 실행
+- `npm run lint` - 코드 린트 검사
+- `npm run lint:fix` - 코드 린트 문제 자동 수정
+- `npm run format:check` - 코드 포맷 검사
+- `npm run format:write` - 코드 포맷 자동 수정
+- `npm run typecheck` - TypeScript 타입 검사
+- `npm run update-types` - Supabase 타입 업데이트
+
+## 프로젝트 구조
+
+```
+src/
+├── components/     # React 컴포넌트
+├── constants/      # 상수 및 문자열
+├── hooks/         # Custom React hooks
+├── lib/           # 유틸리티 라이브러리
+├── pages/         # Next.js 페이지
+├── providers/     # React Context providers
+├── styles/        # 글로벌 스타일
+├── types/         # TypeScript 타입 정의
+└── utils/         # 유틸리티 함수
+```
+
+## 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다.

@@ -5,7 +5,7 @@ import { supabase } from "~/lib/supabase";
 import type { Tables } from "~/lib/database.types";
 
 type User = Tables<"users">;
-type UserMap = { [key: string]: User };
+type UserMap = Record<string, User>;
 
 type UserContextType = {
   users: UserMap;
@@ -24,7 +24,7 @@ export const useUsers = () => useContext(UserContext);
 async function fetchUsers() {
   const { data, error } = await supabase
     .from("users")
-    .select("email, full_name, avatar_url, created_at, updated_at")
+    .select("id, email, full_name, avatar_url, created_at, updated_at")
     .order("full_name");
 
   if (error) {
@@ -43,19 +43,26 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const {
     data: users,
-    error,
+    error: swrError,
     isLoading,
-  } = useSWR(user ? "users" : null, fetchUsers, {
+  } = useSWR<UserMap, Error>(user ? "users" : null, fetchUsers, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
   });
+
+  const error =
+    swrError instanceof Error
+      ? swrError
+      : swrError
+        ? new Error(String(swrError))
+        : null;
 
   return (
     <UserContext.Provider
       value={{
         users: users ?? {},
         loading: isLoading,
-        error: error ? new Error(error.message) : null,
+        error,
       }}
     >
       {children}

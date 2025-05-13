@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import type { FC } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useSwipeable } from "react-swipeable";
@@ -218,7 +218,10 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
   const weeks = getThreeWeeksCalendarDays(baseDate);
   const weekLabel = formatDate(baseDate, "yyyy년 MM월");
 
-  const swipeHandlers = useSwipeable({
+  // Disable the unbound-method rule for this specific instance
+  // as we're handling the ref callback safely
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const { ref: swipeableRef, ...swipeableProps } = useSwipeable({
     onSwipedLeft: () => {
       if (!isDefaultView) {
         handleNextWeek();
@@ -233,11 +236,15 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
     swipeDuration: 500, // Maximum time to swipe (in ms)
   });
 
-  const { ref: swipeRef, ...swipeProps } = swipeHandlers;
-  const attachRef = (el: HTMLDivElement | null) => {
-    swipeRef(el);
-    calendarRef.current = el;
-  };
+  const combinedRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      calendarRef.current = el;
+      if (typeof swipeableRef === "function") {
+        swipeableRef(el);
+      }
+    },
+    [swipeableRef],
+  );
 
   return (
     <div
@@ -248,9 +255,10 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
       })}
     >
       <div
-        ref={attachRef}
-        {...swipeProps}
-        className="flex h-full flex-col overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-gray-200">
+        ref={combinedRef}
+        {...swipeableProps}
+        className="flex h-full flex-col overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-gray-200"
+      >
         <div className="px-5 py-4">
           <div className="flex items-center justify-center gap-4">
             <button

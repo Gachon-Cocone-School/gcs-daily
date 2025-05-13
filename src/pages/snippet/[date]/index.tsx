@@ -7,7 +7,8 @@ export default function SnippetIndexPage() {
 
   useEffect(() => {
     if (date) {
-      void router.replace(`/snippet/${date}/view`);
+      const dateStr = Array.isArray(date) ? date[0] : date;
+      void router.replace(`/snippet/${dateStr}/view`);
     }
   }, [date, router]);
 
