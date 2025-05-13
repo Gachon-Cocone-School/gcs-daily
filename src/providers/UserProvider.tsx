@@ -1,73 +1,45 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import useSWR from "swr";
+import { createContext, useContext, useEffect } from "react";
 import { useAuth } from "./AuthProvider";
-import { supabase } from "~/lib/supabase";
-import type { Tables } from "~/lib/database.types";
+import { useUsersStore } from "@/stores/usersStore";
+import type { Database } from "~/lib/database.types";
 
-type User = Tables<"users">;
-type UserMap = Record<string, User>;
+type User = Database["public"]["Tables"]["users"]["Row"];
 
-type UserContextType = {
-  users: UserMap;
+type UsersContextType = {
+  users: Record<string, User>;
   loading: boolean;
   error: Error | null;
 };
 
-const UserContext = createContext<UserContextType>({
+const UsersContext = createContext<UsersContextType>({
   users: {},
   loading: true,
   error: null,
 });
 
-export const useUsers = () => useContext(UserContext);
-
-async function fetchUsers() {
-  const { data, error } = await supabase
-    .from("users")
-    .select("id, email, full_name, avatar_url, created_at, updated_at")
-    .order("full_name");
-
-  if (error) {
-    throw error;
-  }
-
-  const userMap = data.reduce<UserMap>((acc, user) => {
-    acc[user.email] = user;
-    return acc;
-  }, {});
-
-  return userMap;
-}
+export const useUsers = () => useContext(UsersContext);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const {
-    data: users,
-    error: swrError,
-    isLoading,
-  } = useSWR<UserMap, Error>(user ? "users" : null, fetchUsers, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-  });
+  const { users, loading, error, fetchUsers } = useUsersStore();
 
-  const error =
-    swrError instanceof Error
-      ? swrError
-      : swrError
-        ? new Error(String(swrError))
-        : null;
+  useEffect(() => {
+    if (user) {
+      void fetchUsers();
+    }
+  }, [user, fetchUsers]);
 
   return (
-    <UserContext.Provider
+    <UsersContext.Provider
       value={{
-        users: users ?? {},
-        loading: isLoading,
+        users,
+        loading,
         error,
       }}
     >
       {children}
-    </UserContext.Provider>
+    </UsersContext.Provider>
   );
 }

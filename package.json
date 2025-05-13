@@ -30,9 +30,9 @@
     "react-swipeable": "^7.0.2",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
-    "swr": "^2.3.3",
     "tailwind-merge": "^3.2.0",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
