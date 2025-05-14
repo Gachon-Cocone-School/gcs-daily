@@ -84,5 +84,16 @@ export const strings = {
       future: "미래의 스니펫은 작성할 수 없습니다",
       deleteConfirm: "작성한 스니펫을 정말 삭제하시겠습니까?",
     },
+    achievements: {
+      labels: {
+        growth: "성장성",
+        specificity: "구체성",
+        execution: "실행력",
+        authenticity: "진정성",
+        clarity: "명확성",
+      },
+      feedback: "상세 피드백",
+      score: "{} 점",
+    },
   },
 } as const;

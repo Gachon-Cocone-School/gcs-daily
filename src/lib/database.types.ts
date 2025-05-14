@@ -9,6 +9,44 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      user_achievements: {
+        Row: {
+          user_email: string;
+          snippet_date: string;
+          score: number;
+          feedback: string;
+          meta_data: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_email: string;
+          snippet_date: string;
+          score: number;
+          feedback: string;
+          meta_data: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_email?: string;
+          snippet_date?: string;
+          score?: number;
+          feedback?: string;
+          meta_data?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_user_email_fkey";
+            columns: ["user_email"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["email"];
+          }
+        ];
+      };
       team_achievements: {
         Row: {
           created_at: string;
@@ -206,3 +244,7 @@ export type TeamUpdate = Updateable<"teams">;
 export type User = Tables<"users">;
 export type UserInsert = Insertable<"users">;
 export type UserUpdate = Updateable<"users">;
+
+export type UserAchievement = Tables<"user_achievements">;
+export type UserAchievementInsert = Insertable<"user_achievements">;
+export type UserAchievementUpdate = Updateable<"user_achievements">;

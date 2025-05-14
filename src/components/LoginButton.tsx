@@ -19,7 +19,6 @@ export function LoginButton() {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/`,
-          // redirectTo: `http://localhost:3000/`,
         },
       });
 

@@ -1,5 +1,9 @@
 import { supabase } from "~/lib/supabase";
-import type { Snippet, SnippetInsert } from "~/types/snippet";
+import type {
+  Snippet,
+  SnippetInsert,
+  UserAchievement,
+} from "~/lib/database.types";
 
 export async function ensureDateString(date: Date): Promise<string> {
   const localDate = new Date(date);
@@ -34,39 +38,41 @@ export async function fetchSnippetById(
 export async function fetchTeamSnippets(
   teamName: string,
   date: string,
-  userEmail?: string,
-): Promise<Array<Snippet>> {
-  let query = supabase
+  _userEmail?: string, // Prefixed with _ to indicate it's intentionally unused
+): Promise<Array<Snippet & { user_achievement?: UserAchievement }>> {
+  // Fetch snippets
+  const { data: snippets, error: snippetsError } = await supabase
     .from("snippets")
     .select()
     .eq("team_name", teamName)
     .eq("snippet_date", date);
 
-  if (userEmail) {
-    query = query.order("user_email", { ascending: userEmail === null });
+  if (snippetsError) {
+    throw snippetsError;
   }
 
-  query = query.order("updated_at", { ascending: false });
+  // Fetch achievements for this date
+  const { data: achievements, error: achievementsError } = await supabase
+    .from("user_achievements")
+    .select()
+    .eq("snippet_date", date);
 
-  const { data, error } = await query;
-
-  if (error) {
-    throw error;
+  if (achievementsError) {
+    throw achievementsError;
   }
 
-  if (userEmail) {
-    // Move user's snippet to the beginning
-    const sortedData = data.sort((a, b) => {
-      if (a.user_email === userEmail) return -1;
-      if (b.user_email === userEmail) return 1;
-      return (
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      );
-    });
-    return sortedData;
-  }
+  // Map achievements to snippets
+  const achievementsByEmail = achievements?.reduce<
+    Record<string, UserAchievement>
+  >((acc, achievement) => {
+    acc[achievement.user_email] = achievement;
+    return acc;
+  }, {});
 
-  return data || [];
+  return snippets.map((snippet) => ({
+    ...snippet,
+    user_achievement: achievementsByEmail?.[snippet.user_email],
+  }));
 }
 
 export async function fetchPreviousSnippet(
