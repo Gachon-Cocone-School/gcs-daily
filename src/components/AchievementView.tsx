@@ -42,13 +42,6 @@ export function AchievementView({ achievement }: Props) {
               String(totalScore),
             )}
           </span>
-          {achievement.feedback && (
-            <div className="rounded-lg bg-white p-4">
-              <p className="text-left text-sm whitespace-pre-wrap text-gray-600">
-                {achievement.feedback}
-              </p>
-            </div>
-          )}
         </div>
         {isExpanded ? (
           <ChevronUpIcon className="h-5 w-5 text-gray-500" />
@@ -59,6 +52,13 @@ export function AchievementView({ achievement }: Props) {
 
       {isExpanded && (
         <div className="mt-4 space-y-4">
+          {achievement.feedback && (
+            <div className="rounded-lg bg-white p-4">
+              <p className="text-left text-sm whitespace-pre-wrap text-gray-600">
+                {achievement.feedback}
+              </p>
+            </div>
+          )}
           <div className="space-y-3">
             {Object.entries(score_detail).map(([key, score]) => (
               <div key={key} className="flex items-center justify-between">
