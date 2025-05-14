@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import type { FC } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useSwipeable } from "react-swipeable";
@@ -44,8 +44,9 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
   const isFuture = isFutureDate(date);
   const { users } = useUsers();
 
-  // Find the first snippet with a badge
-  const badgeSnippet = snippets.find((snippet) => snippet.badge === 1);
+  // Get first snippet since all snippets in a day have the same badge value
+  const badgeSnippet = snippets[0];
+  const badgeValue = badgeSnippet?.badge ?? 0;
 
   const getDateString = () => {
     const year = date.getFullYear();
@@ -82,14 +83,15 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
       aria-pressed={isSelected}
     >
       <div className="flex flex-1 flex-col items-center justify-center gap-1">
-        {badgeSnippet && (
+        {badgeValue > 0 && (
           <div className="flex justify-center">
-            <div className="relative h-10 w-10">
+            <div className="relative h-10 w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14">
               <Image
-                src="/bronze_badge.svg"
-                alt={`뱃지`}
+                src={`/${badgeValue === 3 ? "gold" : badgeValue === 2 ? "silver" : "bronze"}_badge.svg`}
+                alt={`${badgeValue === 3 ? "월간" : badgeValue === 2 ? "주간" : "일간"} 뱃지`}
                 fill
-                sizes="40px"
+                priority
+                sizes="(max-width: 1024px) 40px, (max-width: 1280px) 48px, 56px"
                 className="object-contain"
               />
             </div>
@@ -98,7 +100,7 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
         <div
           className={cn(
             "flex-wrap justify-center gap-0.5",
-            badgeSnippet ? "hidden lg:flex" : "flex",
+            badgeValue > 0 ? "hidden lg:flex" : "flex",
           )}
         >
           {snippets?.map((snippet) => {
@@ -108,7 +110,7 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
             return (
               <div
                 key={snippet.snippet_date + snippet.user_email}
-                className="relative h-5 w-5"
+                className="relative h-5 w-5 lg:h-6 lg:w-6 xl:h-7 xl:w-7"
                 title={user.full_name}
               >
                 <div className="relative h-full w-full overflow-hidden rounded-full">
@@ -117,7 +119,7 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
                       src={user.avatar_url}
                       alt={user.full_name}
                       fill
-                      sizes="20px"
+                      sizes="(max-width: 1024px) 20px, (max-width: 1280px) 24px, 28px"
                       className="object-cover"
                     />
                   ) : (
@@ -280,7 +282,7 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
       <div
         className={cn(
           "relative w-full",
-          "sm:w-[640px] lg:w-[720px] xl:w-[800px]",
+          "sm:w-[640px] lg:w-[700px] xl:w-[860px]",
           {
             "aspect-square": aspectRatio === "lg",
             "aspect-[1/1.5]": aspectRatio === "md",
