@@ -5,18 +5,15 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { strings } from "~/constants/strings";
-import { useUsers } from "~/hooks/useUsers";
 import { AchievementView } from "~/components/AchievementView";
-import type { Snippet } from "~/lib/database.types";
 import type { UserAchievement } from "~/lib/database.types";
+import type { SnippetExpanded } from "~/types/snippet";
 
 interface Props {
-  snippets?: Array<Snippet & { user_achievement?: UserAchievement }>;
+  snippets?: Array<SnippetExpanded & { user_achievement?: UserAchievement }>;
 }
 
 export function SnippetView({ snippets = [] }: Props) {
-  const { users } = useUsers();
-
   if (!snippets || snippets.length === 0) {
     return (
       <div className="rounded-lg bg-white p-4 shadow-sm">
@@ -28,25 +25,24 @@ export function SnippetView({ snippets = [] }: Props) {
   return (
     <div className="space-y-6">
       {snippets.map(
-        (snippet: Snippet & { user_achievement?: UserAchievement }) => {
-          const user = users[snippet.user_email];
+        (snippet: SnippetExpanded & { user_achievement?: UserAchievement }) => {
           return (
             <div
               key={snippet.user_email + snippet.snippet_date}
               className="rounded-lg bg-white p-4 shadow-sm"
             >
               <div className="mb-3 flex items-center gap-x-3">
-                {user?.avatar_url && (
+                {snippet.avatar_url && (
                   <Image
-                    src={user.avatar_url}
-                    alt={user.full_name ?? snippet.user_email}
+                    src={snippet.avatar_url}
+                    alt={snippet.full_name ?? snippet.user_email}
                     width={32}
                     height={32}
                     className="h-8 w-8 rounded-full object-cover"
                   />
                 )}
                 <span className="font-medium text-gray-900">
-                  {user?.full_name ?? snippet.user_email}
+                  {snippet.full_name ?? snippet.user_email}
                 </span>
               </div>
               <div className="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">

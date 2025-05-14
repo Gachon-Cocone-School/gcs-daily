@@ -20,7 +20,7 @@ import {
   isToday,
 } from "~/utils/dateTime";
 import { cn } from "~/utils/cn";
-import type { Snippet } from "~/types/snippet";
+import type { SnippetExpanded } from "~/types/snippet";
 
 export default function SnippetViewPage() {
   const router = useRouter();
@@ -35,7 +35,7 @@ export default function SnippetViewPage() {
   );
 
   // Snippets state
-  const [snippets, setSnippets] = useState<Array<Snippet>>([]);
+  const [snippets, setSnippets] = useState<Array<SnippetExpanded>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditable, setIsEditable] = useState(false);
   const [error, setError] = useState<string | null>(null);

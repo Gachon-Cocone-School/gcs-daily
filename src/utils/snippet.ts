@@ -3,7 +3,9 @@ import type {
   Snippet,
   SnippetInsert,
   UserAchievement,
+  Tables,
 } from "~/lib/database.types";
+import type { SnippetExpanded } from "~/types/snippet";
 
 export async function ensureDateString(date: Date): Promise<string> {
   const localDate = new Date(date);
@@ -39,10 +41,10 @@ export async function fetchTeamSnippets(
   teamName: string,
   date: string,
   _userEmail?: string, // Prefixed with _ to indicate it's intentionally unused
-): Promise<Array<Snippet & { user_achievement?: UserAchievement }>> {
-  // Fetch snippets
+): Promise<Array<SnippetExpanded & { user_achievement?: UserAchievement }>> {
+  // Fetch snippets from expanded view
   const { data: snippets, error: snippetsError } = await supabase
-    .from("snippets")
+    .from("snippets_expanded")
     .select()
     .eq("team_name", teamName)
     .eq("snippet_date", date);
@@ -69,7 +71,7 @@ export async function fetchTeamSnippets(
     return acc;
   }, {});
 
-  return snippets.map((snippet) => ({
+  return (snippets as SnippetExpanded[]).map((snippet) => ({
     ...snippet,
     user_achievement: achievementsByEmail?.[snippet.user_email],
   }));

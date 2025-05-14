@@ -16,17 +16,10 @@ import {
   isInDefaultThreeWeeks,
 } from "~/utils/dateTime";
 import { useTeam } from "~/hooks/useTeam";
-import { useUsers } from "~/hooks/useUsers";
 import { supabase } from "~/lib/supabase";
 import { useAuth } from "~/providers/AuthProvider";
 import Image from "next/image";
-import type { Tables } from "~/lib/database.types";
-
-type Snippet = Tables<"snippets">;
-
-interface SnippetExpanded extends Snippet {
-  badge: number;
-}
+import type { SnippetExpanded } from "~/types/snippet";
 
 interface CalendarProps {
   selectedDate?: Date;
@@ -42,7 +35,6 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
   const router = useRouter();
   const isTodayDate = isToday(date);
   const isFuture = isFutureDate(date);
-  const { users } = useUsers();
 
   // Get first snippet since all snippets in a day have the same badge value
   const badgeSnippet = snippets[0];
@@ -103,34 +95,29 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
             badgeValue > 0 ? "hidden lg:flex" : "flex",
           )}
         >
-          {snippets?.map((snippet) => {
-            const user = users[snippet.user_email ?? ""];
-            if (!user) return null;
-
-            return (
-              <div
-                key={snippet.snippet_date + snippet.user_email}
-                className="relative h-5 w-5 lg:h-6 lg:w-6 xl:h-7 xl:w-7"
-                title={user.full_name}
-              >
-                <div className="relative h-full w-full overflow-hidden rounded-full">
-                  {user.avatar_url ? (
-                    <Image
-                      src={user.avatar_url}
-                      alt={user.full_name}
-                      fill
-                      sizes="(max-width: 1024px) 20px, (max-width: 1280px) 24px, 28px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gray-200 text-xs text-gray-600">
-                      {user.full_name[0]}
-                    </div>
-                  )}
-                </div>
+          {snippets?.map((snippet) => (
+            <div
+              key={snippet.snippet_date + snippet.user_email}
+              className="relative h-5 w-5 lg:h-6 lg:w-6 xl:h-7 xl:w-7"
+              title={snippet.full_name}
+            >
+              <div className="relative h-full w-full overflow-hidden rounded-full">
+                {snippet.avatar_url ? (
+                  <Image
+                    src={snippet.avatar_url}
+                    alt={snippet.full_name}
+                    fill
+                    sizes="(max-width: 1024px) 20px, (max-width: 1280px) 24px, 28px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gray-200 text-xs text-gray-600">
+                    {snippet.full_name[0]}
+                  </div>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
       <span
