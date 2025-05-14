@@ -1,4 +1,11 @@
 export const strings = {
+  leaderboard: {
+    title: "팀 리더보드",
+    daily: "일간 순위",
+    weekly: "주간 순위",
+    rank: "{}등",
+    noData: "데이터가 없습니다.",
+  },
   app: {
     title: "Daily Snippet",
     description: "GCS Daily Snippet",

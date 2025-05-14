@@ -282,7 +282,7 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
       <div
         className={cn(
           "relative w-full",
-          "sm:w-[640px] lg:w-[700px] xl:w-[860px]",
+          "sm:w-[640px] lg:w-[700px] xl:w-[760px]",
           {
             "aspect-square": aspectRatio === "lg",
             "aspect-[1/1.5]": aspectRatio === "md",

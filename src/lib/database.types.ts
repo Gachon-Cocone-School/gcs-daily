@@ -9,6 +9,38 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      team_achievements: {
+        Row: {
+          created_at: string;
+          team_name: string;
+          snippet_date: string;
+          point: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          team_name: string;
+          snippet_date: string;
+          point: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          team_name?: string;
+          snippet_date?: string;
+          point?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_achievements_team_name_fkey";
+            columns: ["team_name"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["team_name"];
+          }
+        ];
+      };
       allowed_emails: {
         Row: {
           created_at: string;

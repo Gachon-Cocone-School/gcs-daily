@@ -4,6 +4,7 @@ import Head from "next/head";
 import Image from "next/image";
 import { LoginButton } from "~/components/LoginButton";
 import { Calendar } from "~/components/Calendar";
+import { Leaderboard } from "~/components/Leaderboard";
 import { useAuth } from "~/providers/AuthProvider";
 import { useTeam } from "~/providers/TeamProvider";
 import { useUsers } from "~/providers/UserProvider";
@@ -96,8 +97,15 @@ export default function Home() {
             <div className="text-center">{strings.app.noTeams}</div>
           </main>
         ) : (
-          <main className="flex-1 bg-gray-50 p-8">
-            <Calendar />
+          <main className="bg-gray-50 p-8">
+            <div className="container mx-auto flex flex-col gap-8 lg:flex-row">
+              <div className="flex-1">
+                <Calendar />
+              </div>
+              <div className="w-full lg:w-[480px]">
+                <Leaderboard />
+              </div>
+            </div>
           </main>
         )}
       </div>
