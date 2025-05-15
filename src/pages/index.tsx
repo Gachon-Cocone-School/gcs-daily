@@ -4,6 +4,7 @@ import Head from "next/head";
 import { Calendar } from "~/components/Calendar";
 import { Leaderboard } from "~/components/Leaderboard";
 import { Header } from "~/components/Header";
+import { LoginButton } from "~/components/LoginButton";
 import { useAuth } from "~/providers/AuthProvider";
 import { strings } from "~/constants/strings";
 
@@ -36,6 +37,7 @@ export default function Home() {
               <h2 className="mb-8 text-3xl font-semibold text-gray-900">
                 {strings.app.title}
               </h2>
+              <LoginButton />
             </div>
           </main>
         ) : authState === "initializing" || authState === "checking" ? (
