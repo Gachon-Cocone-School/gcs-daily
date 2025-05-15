@@ -9,14 +9,18 @@ import { strings } from "~/constants/strings";
 import AuthGuard from "~/components/AuthGuard";
 import Loading from "~/components/Loading";
 import { useAuth } from "~/providers/AuthProvider";
-import { useTeam } from "~/providers/TeamProvider";
 import { formatDate, isFutureDate } from "~/utils/dateTime";
 import { useEffect, useState, useMemo } from "react";
+import { supabase } from "~/lib/supabase";
+import type { Database } from "~/lib/database.types";
+
+type Team = Database["public"]["Tables"]["teams"]["Row"];
 
 export default function SnippetEditPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { team, loading: teamLoading } = useTeam();
+  const [team, setTeam] = useState<Team | null>(null);
+  const [teamLoading, setTeamLoading] = useState(true);
   const [isFuture, setIsFuture] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
@@ -28,15 +32,43 @@ export default function SnippetEditPage() {
   );
 
   useEffect(() => {
-    const checkFutureDate = async () => {
+    const checkFutureDate = () => {
       if (!date) return;
       setIsChecking(true);
-      const future = await isFutureDate(date);
-      setIsFuture(future);
+      setIsFuture(isFutureDate(date));
       setIsChecking(false);
     };
-    void checkFutureDate();
+    checkFutureDate();
   }, [date]);
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      if (!user?.email) return;
+
+      setTeamLoading(true);
+      try {
+        const { data: teamData, error } = await supabase
+          .from("teams")
+          .select("*")
+          .contains("emails", [user.email])
+          .single();
+
+        if (error) {
+          console.error("Error fetching team:", error);
+          setTeam(null);
+        } else {
+          setTeam(teamData);
+        }
+      } catch (error) {
+        console.error("Error fetching team:", error);
+        setTeam(null);
+      } finally {
+        setTeamLoading(false);
+      }
+    };
+
+    void fetchTeam();
+  }, [user?.email]);
 
   const handleBack = () => {
     if (typeof dateString === "string") {

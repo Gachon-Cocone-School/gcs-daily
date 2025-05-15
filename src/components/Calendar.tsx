@@ -5,6 +5,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import type { FC } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useSwipeable } from "react-swipeable";
+import Image from "next/image";
 import { strings } from "~/constants/strings";
 import { cn } from "~/utils/cn";
 import {
@@ -15,10 +16,9 @@ import {
   getThreeWeeksCalendarDays,
   isInDefaultThreeWeeks,
 } from "~/utils/dateTime";
-import { useTeam } from "~/hooks/useTeam";
 import { supabase } from "~/lib/supabase";
 import { useAuth } from "~/providers/AuthProvider";
-import Image from "next/image";
+import type { Database } from "~/lib/database.types";
 import type { SnippetExpanded } from "~/types/snippet";
 
 interface CalendarProps {
@@ -146,10 +146,38 @@ export const Calendar: FC<CalendarProps> = ({ selectedDate }) => {
   const [aspectRatio, setAspectRatio] = useState("lg");
   const isDefaultView = isInDefaultThreeWeeks(baseDate);
   const { user } = useAuth();
-  const { team } = useTeam(user?.email);
+  const [team, setTeam] = useState<
+    Database["public"]["Tables"]["teams"]["Row"] | null
+  >(null);
   const [snippetsExpanded, setSnippetsExpanded] = useState<
     Record<string, SnippetExpanded[]>
   >({});
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      if (!user?.email) return;
+
+      try {
+        const { data: teamData, error } = await supabase
+          .from("teams")
+          .select("*")
+          .contains("emails", [user.email])
+          .single();
+
+        if (error) {
+          console.error("Error fetching team:", error);
+          setTeam(null);
+        } else {
+          setTeam(teamData);
+        }
+      } catch (error) {
+        console.error("Error fetching team:", error);
+        setTeam(null);
+      }
+    };
+
+    void fetchTeam();
+  }, [user?.email]);
 
   useEffect(() => {
     const checkCellWidth = () => {

@@ -11,7 +11,6 @@ import { strings } from "~/constants/strings";
 import AuthGuard from "~/components/AuthGuard";
 import Loading from "~/components/Loading";
 import { useAuth } from "~/providers/AuthProvider";
-import { useTeam } from "~/providers/TeamProvider";
 import { fetchTeamSnippets, deleteSnippet } from "~/utils/snippet";
 import {
   formatDate,
@@ -19,13 +18,18 @@ import {
   canEditSnippetServerTime,
   isToday,
 } from "~/utils/dateTime";
+import { supabase } from "~/lib/supabase";
+import type { Database } from "~/lib/database.types";
 import { cn } from "~/utils/cn";
 import type { SnippetExpanded } from "~/types/snippet";
 
 export default function SnippetViewPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { team, loading: teamLoading } = useTeam();
+  const [team, setTeam] = useState<
+    Database["public"]["Tables"]["teams"]["Row"] | null
+  >(null);
+  const [teamLoading, setTeamLoading] = useState(true);
   const [isFuture, setIsFuture] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
@@ -43,15 +47,44 @@ export default function SnippetViewPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkFutureDate = async () => {
+    const checkFutureDate = () => {
       if (!date) return;
       setIsChecking(true);
-      const future = await isFutureDate(date);
-      setIsFuture(future);
+      setIsFuture(isFutureDate(date));
       setIsChecking(false);
     };
-    void checkFutureDate();
+    checkFutureDate();
   }, [date]);
+
+  // Fetch team data
+  useEffect(() => {
+    const fetchTeam = async () => {
+      if (!user?.email) return;
+
+      setTeamLoading(true);
+      try {
+        const { data: teamData, error } = await supabase
+          .from("teams")
+          .select("*")
+          .contains("emails", [user.email])
+          .single();
+
+        if (error) {
+          console.error("Error fetching team:", error);
+          setTeam(null);
+        } else {
+          setTeam(teamData);
+        }
+      } catch (error) {
+        console.error("Error fetching team:", error);
+        setTeam(null);
+      } finally {
+        setTeamLoading(false);
+      }
+    };
+
+    void fetchTeam();
+  }, [user?.email]);
 
   useEffect(() => {
     async function loadData() {
