@@ -3,7 +3,6 @@ import type {
   Snippet,
   SnippetInsert,
   UserAchievement,
-  Tables,
 } from "~/lib/database.types";
 import type { SnippetExpanded } from "~/types/snippet";
 

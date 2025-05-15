@@ -37,11 +37,11 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
   const [isFuture, setIsFuture] = useState(false);
 
   useEffect(() => {
-    const checkFutureDate = async () => {
-      const future = await isFutureDate(date);
+    const checkFutureDate = () => {
+      const future = isFutureDate(date);
       setIsFuture(future);
     };
-    void checkFutureDate();
+    checkFutureDate();
   }, [date]);
 
   // Get first snippet since all snippets in a day have the same badge value

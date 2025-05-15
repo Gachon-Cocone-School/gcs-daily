@@ -3,7 +3,6 @@
 import { type AppType } from "next/app";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "~/providers/AuthProvider";
-import { UserProvider } from "~/providers/UserProvider";
 
 import "~/styles/globals.css";
 
@@ -16,11 +15,9 @@ const inter = Inter({
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <AuthProvider>
-      <UserProvider>
-        <div className={`${inter.variable} font-sans`}>
-          <Component {...pageProps} />
-        </div>
-      </UserProvider>
+      <div className={`${inter.variable} font-sans`}>
+        <Component {...pageProps} />
+      </div>
     </AuthProvider>
   );
 };

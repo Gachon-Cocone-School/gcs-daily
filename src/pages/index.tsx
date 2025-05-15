@@ -2,17 +2,52 @@
 
 import Head from "next/head";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { LoginButton } from "~/components/LoginButton";
 import { Calendar } from "~/components/Calendar";
 import { Leaderboard } from "~/components/Leaderboard";
 import { useAuth } from "~/providers/AuthProvider";
-import { useUsers } from "~/providers/UserProvider";
+import { supabase } from "~/lib/supabase";
+import type { Database } from "~/lib/database.types";
 import { strings } from "~/constants/strings";
+
+type User = Database["public"]["Tables"]["users"]["Row"];
 
 export default function Home() {
   const { user, authState } = useAuth();
-  const { users } = useUsers();
-  const currentUser = user?.email ? users[user.email] : null;
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchUserData() {
+      if (!user?.email) {
+        setCurrentUser(null);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", user.email)
+          .single();
+
+        if (error) {
+          console.error("Error fetching user data:", error);
+          return;
+        }
+
+        setCurrentUser(data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void fetchUserData();
+  }, [user?.email]);
 
   return (
     <>
@@ -39,7 +74,7 @@ export default function Home() {
             </h1>
             {user && authState === "allowed" && (
               <div className="flex items-center gap-3">
-                {currentUser && (
+                {!loading && currentUser && (
                   <div className="flex items-center gap-2">
                     <div className="relative h-8 w-8 overflow-hidden rounded-full">
                       {currentUser.avatar_url ? (
