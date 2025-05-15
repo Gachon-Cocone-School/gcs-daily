@@ -11,15 +11,32 @@ import Loading from "~/components/Loading";
 import { useAuth } from "~/providers/AuthProvider";
 import { useTeam } from "~/providers/TeamProvider";
 import { formatDate, isFutureDate } from "~/utils/dateTime";
+import { useEffect, useState, useMemo } from "react";
 
 export default function SnippetEditPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { team, loading: teamLoading } = useTeam();
+  const [isFuture, setIsFuture] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   // Parse the date from the URL
   const { date: dateString } = router.query;
-  const date = dateString ? new Date(dateString as string) : null;
+  const date = useMemo(
+    () => (dateString ? new Date(dateString as string) : null),
+    [dateString],
+  );
+
+  useEffect(() => {
+    const checkFutureDate = async () => {
+      if (!date) return;
+      setIsChecking(true);
+      const future = await isFutureDate(date);
+      setIsFuture(future);
+      setIsChecking(false);
+    };
+    void checkFutureDate();
+  }, [date]);
 
   const handleBack = () => {
     if (typeof dateString === "string") {
@@ -70,7 +87,7 @@ export default function SnippetEditPage() {
           </header>
 
           <main className="flex-1 bg-gray-50">
-            {teamLoading ? (
+            {teamLoading || isChecking ? (
               <Loading message={strings.app.status.loadingTeam} />
             ) : !team ? (
               <div className="flex flex-1 items-center justify-center">
@@ -80,7 +97,7 @@ export default function SnippetEditPage() {
               <div className="flex flex-1 items-center justify-center">
                 <div className="text-center">{strings.snippet.invalidDate}</div>
               </div>
-            ) : isFutureDate(date) ? (
+            ) : isFuture ? (
               <div className="flex flex-1 items-center justify-center">
                 <div className="text-center">
                   {strings.snippet.validation.future}

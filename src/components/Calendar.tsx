@@ -34,7 +34,15 @@ interface DateCellProps {
 const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
   const router = useRouter();
   const isTodayDate = isToday(date);
-  const isFuture = isFutureDate(date);
+  const [isFuture, setIsFuture] = useState(false);
+
+  useEffect(() => {
+    const checkFutureDate = async () => {
+      const future = await isFutureDate(date);
+      setIsFuture(future);
+    };
+    void checkFutureDate();
+  }, [date]);
 
   // Get first snippet since all snippets in a day have the same badge value
   const badgeSnippet = snippets[0];

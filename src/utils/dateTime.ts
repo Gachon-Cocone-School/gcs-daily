@@ -54,67 +54,16 @@ export const isToday = (date: Date): boolean => {
 };
 
 /**
- * Checks if a date is in the future (after today)
+ * Checks if a date is in the future
  */
 export const isFutureDate = (date: Date): boolean => {
   const today = getCurrentDate();
+  today.setHours(0, 0, 0, 0);
+
   const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
 
   return targetDate > today;
-};
-
-/**
- * Get calendar days for the month view, limited to 2 weeks before and 1 week after current date
- */
-export const getCalendarDays = (month: Date): Date[][] => {
-  const today = getCurrentDate();
-  const targetDate = new Date(month);
-  const year = targetDate.getFullYear();
-  const monthIndex = targetDate.getMonth();
-
-  // Get the first day of the month
-  const firstDay = new Date(year, monthIndex, 1);
-  // Get the day of week for the first day (0 = Sunday, 6 = Saturday)
-  const firstDayOfWeek = firstDay.getDay();
-
-  // Calculate the starting date of the calendar grid
-  const start = new Date(year, monthIndex, 1 - firstDayOfWeek);
-
-  // Calculate valid date range
-  const twoWeeksAgo = new Date(today);
-  twoWeeksAgo.setDate(today.getDate() - 14); // 2 weeks before today
-  const oneWeekAhead = new Date(today);
-  oneWeekAhead.setDate(today.getDate() + 7); // 1 week after today
-
-  const weeks: Date[][] = [];
-  let currentWeek: Date[] = [];
-
-  // Generate 6 weeks of dates
-  for (let i = 0; i < 42; i++) {
-    const currentDate = new Date(start.getTime());
-    currentDate.setDate(start.getDate() + i);
-
-    if (i % 7 === 0 && i > 0) {
-      // Only add the week if it contains at least one day within our valid range
-      if (
-        currentWeek.some((date) => date >= twoWeeksAgo && date <= oneWeekAhead)
-      ) {
-        weeks.push(currentWeek);
-      }
-      currentWeek = [];
-    }
-
-    currentWeek.push(new Date(currentDate));
-  }
-
-  if (
-    currentWeek.length > 0 &&
-    currentWeek.some((date) => date >= twoWeeksAgo && date <= oneWeekAhead)
-  ) {
-    weeks.push(currentWeek);
-  }
-
-  return weeks;
 };
 
 /**
@@ -181,7 +130,8 @@ const getServerTime = async (): Promise<Date | null> => {
  * Rules:
  * - If server time cannot be fetched, editing is not allowed
  * - Today's snippet can always be edited
- * - All other snippets cannot be edited
+ * - Yesterday's snippet can be edited until 9am
+ * - Tomorrow's snippet cannot be edited
  */
 export const canEditSnippetServerTime = async (
   date: Date,
@@ -193,15 +143,17 @@ export const canEditSnippetServerTime = async (
   targetDate.setHours(0, 0, 0, 0);
 
   const serverDate = new Date(serverTime);
+  const currentHour = serverDate.getHours();
   serverDate.setHours(0, 0, 0, 0);
 
-  // 내일 날짜 계산
-  const tomorrow = new Date(serverDate);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  // 어제 날짜 계산
+  const yesterday = new Date(serverDate);
+  yesterday.setDate(yesterday.getDate() - 1);
 
-  // 오늘이거나 내일인 경우 수정 가능
+  // 오늘이면 수정 가능
+  // 어제인 경우 오전 9시 이전이면 수정 가능
   return (
-    serverDate.getTime() === targetDate.getTime() ||
-    tomorrow.getTime() === targetDate.getTime()
+    serverDate.getTime() === targetDate.getTime() || // 오늘
+    (yesterday.getTime() === targetDate.getTime() && currentHour < 9) // 어제 (9시 이전)
   );
 };

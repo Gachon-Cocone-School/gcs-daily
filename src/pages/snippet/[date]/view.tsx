@@ -26,6 +26,8 @@ export default function SnippetViewPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { team, loading: teamLoading } = useTeam();
+  const [isFuture, setIsFuture] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   // Parse the date from the URL
   const { date: dateString } = router.query;
@@ -40,7 +42,17 @@ export default function SnippetViewPage() {
   const [isEditable, setIsEditable] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 편집 가능 여부와 스니펫 로드
+  useEffect(() => {
+    const checkFutureDate = async () => {
+      if (!date) return;
+      setIsChecking(true);
+      const future = await isFutureDate(date);
+      setIsFuture(future);
+      setIsChecking(false);
+    };
+    void checkFutureDate();
+  }, [date]);
+
   useEffect(() => {
     async function loadData() {
       if (!date || !team || !user?.email) return;
@@ -206,7 +218,7 @@ export default function SnippetViewPage() {
           </header>
 
           <main className="flex-1 bg-gray-50">
-            {teamLoading ? (
+            {teamLoading || isChecking ? (
               <Loading message={strings.app.status.loadingTeam} />
             ) : !team ? (
               <div className="flex flex-1 items-center justify-center">
@@ -216,7 +228,7 @@ export default function SnippetViewPage() {
               <div className="flex flex-1 items-center justify-center">
                 <div className="text-center">{strings.snippet.invalidDate}</div>
               </div>
-            ) : isFutureDate(date) ? (
+            ) : isFuture ? (
               <div className="flex flex-1 items-center justify-center">
                 <div className="text-center">
                   {strings.snippet.validation.future}
