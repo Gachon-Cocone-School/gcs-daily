@@ -2,9 +2,8 @@
 
 import { useRouter } from "next/router";
 import Head from "next/head";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { SnippetEdit } from "~/components/SnippetEdit";
-import { LoginButton } from "~/components/LoginButton";
+import { Header } from "~/components/Header";
 import { strings } from "~/constants/strings";
 import AuthGuard from "~/components/AuthGuard";
 import Loading from "~/components/Loading";
@@ -98,25 +97,12 @@ export default function SnippetEditPage() {
         </Head>
 
         <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4">
-            <div className="container mx-auto flex h-16 items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="rounded-lg p-2 text-gray-600 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:outline-none"
-                  aria-label={strings.calendar.action.back}
-                >
-                  <ChevronLeftIcon className="h-5 w-5" />
-                </button>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  {strings.app.title}
-                </h1>
-              </div>
-
-              <LoginButton />
-            </div>
-          </header>
+          <Header
+            showBackButton
+            onBack={handleBack}
+            currentUser={user}
+            loading={teamLoading}
+          />
 
           <main className="flex-1 bg-gray-50">
             {teamLoading || isChecking ? (

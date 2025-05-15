@@ -1,53 +1,14 @@
 "use client";
 
 import Head from "next/head";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import { LoginButton } from "~/components/LoginButton";
 import { Calendar } from "~/components/Calendar";
 import { Leaderboard } from "~/components/Leaderboard";
+import { Header } from "~/components/Header";
 import { useAuth } from "~/providers/AuthProvider";
-import { supabase } from "~/lib/supabase";
-import type { Database } from "~/lib/database.types";
 import { strings } from "~/constants/strings";
-
-type User = Database["public"]["Tables"]["users"]["Row"];
 
 export default function Home() {
   const { user, authState } = useAuth();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchUserData() {
-      if (!user?.email) {
-        setCurrentUser(null);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("email", user.email)
-          .single();
-
-        if (error) {
-          console.error("Error fetching user data:", error);
-          return;
-        }
-
-        setCurrentUser(data);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void fetchUserData();
-  }, [user?.email]);
 
   return (
     <>
@@ -67,40 +28,7 @@ export default function Home() {
       </Head>
 
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 shadow-sm">
-          <div className="container mx-auto flex h-16 items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">
-              {strings.app.title}
-            </h1>
-            {user && authState === "allowed" && (
-              <div className="flex items-center gap-3">
-                {!loading && currentUser && (
-                  <div className="flex items-center gap-2">
-                    <div className="relative h-8 w-8 overflow-hidden rounded-full">
-                      {currentUser.avatar_url ? (
-                        <Image
-                          src={currentUser.avatar_url}
-                          alt={currentUser.full_name}
-                          fill
-                          sizes="32px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gray-200 text-sm text-gray-600">
-                          {currentUser.full_name[0]}
-                        </div>
-                      )}
-                    </div>
-                    <span className="hidden text-sm text-gray-700 sm:inline-block">
-                      {currentUser.full_name}
-                    </span>
-                  </div>
-                )}
-                <LoginButton />
-              </div>
-            )}
-          </div>
-        </header>
+        <Header />
 
         {!user || authState === "denied" ? (
           <main className="flex flex-1 items-center justify-center bg-gradient-to-b from-gray-50 to-white">
@@ -108,7 +36,6 @@ export default function Home() {
               <h2 className="mb-8 text-3xl font-semibold text-gray-900">
                 {strings.app.title}
               </h2>
-              <LoginButton />
             </div>
           </main>
         ) : authState === "initializing" || authState === "checking" ? (
