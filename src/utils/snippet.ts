@@ -3,6 +3,7 @@ import type {
   Snippet,
   SnippetInsert,
   UserAchievement,
+  Database,
 } from "~/lib/database.types";
 import type { SnippetExpanded } from "~/types/snippet";
 
@@ -146,4 +147,41 @@ export async function deleteSnippet(
   if (error) {
     throw error;
   }
+}
+
+export type SnippetExpandedByUser =
+  Database["public"]["Views"]["snippets_expanded_by_user"]["Row"];
+
+/**
+ * Fetches snippets for faculty view from snippets_expanded_by_user view
+ * with optional filtering by team and user
+ */
+export async function fetchFacultySnippets(
+  dateFrom: string,
+  dateTo: string,
+  teamName?: string,
+  userEmail?: string,
+): Promise<Database["public"]["Views"]["snippets_expanded_by_user"]["Row"][]> {
+  let query = supabase
+    .from("snippets_expanded_by_user")
+    .select()
+    .gte("snippet_date", dateFrom)
+    .lte("snippet_date", dateTo)
+    .order("snippet_date", { ascending: false });
+
+  if (teamName && teamName !== "모든 팀") {
+    query = query.eq("team_name", teamName);
+  }
+
+  if (userEmail && userEmail !== "모든 작성자") {
+    query = query.eq("user_email", userEmail);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
 }

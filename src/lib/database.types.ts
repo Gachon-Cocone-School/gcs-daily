@@ -44,7 +44,7 @@ export interface Database {
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["email"];
-          }
+          },
         ];
       };
       team_achievements: {
@@ -76,7 +76,7 @@ export interface Database {
             isOneToOne: false;
             referencedRelation: "teams";
             referencedColumns: ["team_name"];
-          }
+          },
         ];
       };
       allowed_emails: {
@@ -213,7 +213,19 @@ export interface Database {
         ];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      snippets_expanded_by_user: {
+        Row: {
+          snippet_date: string;
+          team_name: string;
+          user_email: string;
+          content: string | null;
+          team_alias: string;
+          full_name: string;
+          point: number;
+        };
+      };
+    };
     Functions: Record<string, never>;
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
