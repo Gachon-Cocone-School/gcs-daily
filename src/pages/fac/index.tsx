@@ -17,17 +17,24 @@ import { FacultySnippetView } from "~/components/FacultySnippetView";
 type Team = Database["public"]["Tables"]["teams"]["Row"];
 
 export default function FacultyPage() {
-  // States for date range picker
-  const [startDate, setStartDate] = useState<string>(
-    format(new Date(), "yyyy-MM-dd"),
-  );
-  const [endDate, setEndDate] = useState<string>(
-    format(new Date(), "yyyy-MM-dd"),
-  );
+  // Function to get yesterday's date formatted as yyyy-MM-dd
+  const getYesterdayFormatted = () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return format(yesterday, "yyyy-MM-dd");
+  };
+
+  // States for date range picker - default to yesterday
+  const [startDate, setStartDate] = useState<string>(getYesterdayFormatted());
+  const [endDate, setEndDate] = useState<string>(getYesterdayFormatted());
 
   // States for filters and data
   const [selectedTeam, setSelectedTeam] = useState<string>("모든 팀");
+  const [selectedTeamDisplay, setSelectedTeamDisplay] =
+    useState<string>("모든 팀");
   const [selectedUser, setSelectedUser] = useState<string>("모든 작성자");
+  const [selectedUserDisplay, setSelectedUserDisplay] =
+    useState<string>("모든 작성자");
   const [teams, setTeams] = useState<Team[]>([]);
   const [users, setUsers] = useState<{ email: string; full_name: string }[]>(
     [],
@@ -41,12 +48,19 @@ export default function FacultyPage() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState<boolean>(false);
 
   // Fetch teams data on component mount
+  // Helper function to get the team display name (last item in team_alias array)
+  const getTeamDisplayName = (team: Team): string => {
+    if (!team.team_alias?.length) return team.team_name;
+    return team.team_alias[team.team_alias.length - 1] ?? team.team_name;
+  };
+
   useEffect(() => {
     const fetchTeams = async () => {
       try {
         const { data, error } = await supabase
           .from("teams")
           .select("*")
+          .neq("team_name", "교수진") // Exclude "교수진" team
           .order("team_name");
 
         if (error) {
@@ -69,12 +83,7 @@ export default function FacultyPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        let query = supabase
-          .from("users")
-          .select("email, full_name")
-          .order("full_name");
-
-        // If a specific team is selected, filter users by that team
+        // 특정 팀이 선택된 경우
         if (selectedTeam !== "모든 팀") {
           const { data: teamData } = await supabase
             .from("teams")
@@ -83,19 +92,57 @@ export default function FacultyPage() {
             .single();
 
           if (teamData?.emails && teamData.emails.length > 0) {
-            query = query.in("email", teamData.emails);
+            // 팀에 속한 사용자만 가져오기
+            const { data, error } = await supabase
+              .from("users")
+              .select("email, full_name")
+              .in("email", teamData.emails)
+              .order("full_name");
+
+            if (error) throw error;
+
+            if (data) {
+              setUsers(data);
+              setSelectedUser("모든 작성자");
+              setSelectedUserDisplay("모든 작성자");
+            }
+          } else {
+            // 팀에 사용자가 없으면 빈 배열 설정
+            setUsers([]);
           }
-        }
+        } else {
+          // "모든 팀"이 선택된 경우 - 교수진 제외한 모든 사용자 표시
 
-        const { data, error } = await query;
+          // 1. 먼저 교수진 팀의 이메일 목록 가져오기
+          const { data: facultyTeam } = await supabase
+            .from("teams")
+            .select("emails")
+            .eq("team_name", "교수진")
+            .single();
 
-        if (error) {
-          throw error;
-        }
+          // 2. 모든 사용자 가져오기
+          const { data: allUsers, error: usersError } = await supabase
+            .from("users")
+            .select("email, full_name")
+            .order("full_name");
 
-        if (data) {
-          setUsers(data);
-          setSelectedUser("모든 작성자"); // Reset user selection when team changes
+          if (usersError) throw usersError;
+
+          if (allUsers) {
+            // 3. 교수진 이메일 목록이 있으면 필터링하여 제외
+            let filteredUsers = allUsers;
+
+            if (facultyTeam?.emails && facultyTeam.emails.length > 0) {
+              // 교수진 이메일에 포함되지 않은 사용자만 필터링
+              filteredUsers = allUsers.filter(
+                (user) => !facultyTeam.emails.includes(user.email),
+              );
+            }
+
+            setUsers(filteredUsers);
+            setSelectedUser("모든 작성자");
+            setSelectedUserDisplay("모든 작성자");
+          }
         }
       } catch (err) {
         console.error("Error fetching users:", err);
@@ -137,15 +184,15 @@ export default function FacultyPage() {
     void fetchSnippets();
   };
 
-  // Group snippets by user and date
-  const groupedSnippets = snippets.reduce<
-    Record<string, SnippetExpandedByUser[]>
-  >((acc, snippet) => {
+  // Group snippets by user and date using Map to preserve order
+  const groupedSnippetsMap = new Map<string, SnippetExpandedByUser[]>();
+  snippets.forEach((snippet) => {
     const key = `${snippet.full_name}_${snippet.snippet_date}`;
-    acc[key] ??= [];
-    acc[key].push(snippet);
-    return acc;
-  }, {});
+    if (!groupedSnippetsMap.has(key)) {
+      groupedSnippetsMap.set(key, []);
+    }
+    groupedSnippetsMap.get(key)?.push(snippet);
+  });
 
   // Toggle dropdowns
   const handleTeamDropdownToggle = () => {
@@ -222,7 +269,18 @@ export default function FacultyPage() {
                       aria-haspopup="listbox"
                       aria-expanded={isTeamDropdownOpen}
                     >
-                      <span>{selectedTeam}</span>
+                      <span>
+                        {selectedTeam === "모든 팀"
+                          ? "모든 팀"
+                          : (() => {
+                              const team = teams.find(
+                                (t) => t.team_name === selectedTeam,
+                              );
+                              return team
+                                ? getTeamDisplayName(team)
+                                : selectedTeam;
+                            })()}
+                      </span>
                       <ChevronDownIcon className="h-5 w-5 text-gray-400" />
                     </button>
                     {isTeamDropdownOpen && (
@@ -246,7 +304,7 @@ export default function FacultyPage() {
                                 setIsTeamDropdownOpen(false);
                               }}
                             >
-                              {team.team_name}
+                              {getTeamDisplayName(team)}
                             </li>
                           ))}
                         </ul>
@@ -267,7 +325,7 @@ export default function FacultyPage() {
                       aria-haspopup="listbox"
                       aria-expanded={isUserDropdownOpen}
                     >
-                      <span>{selectedUser}</span>
+                      <span>{selectedUserDisplay}</span>
                       <ChevronDownIcon className="h-5 w-5 text-gray-400" />
                     </button>
                     {isUserDropdownOpen && (
@@ -277,23 +335,30 @@ export default function FacultyPage() {
                             className="cursor-pointer px-3 py-2 select-none hover:bg-gray-100"
                             onClick={() => {
                               setSelectedUser("모든 작성자");
+                              setSelectedUserDisplay("모든 작성자");
                               setIsUserDropdownOpen(false);
                             }}
                           >
                             모든 작성자
                           </li>
-                          {users.map((user) => (
-                            <li
-                              key={user.email}
-                              className="cursor-pointer px-3 py-2 select-none hover:bg-gray-100"
-                              onClick={() => {
-                                setSelectedUser(user.email);
-                                setIsUserDropdownOpen(false);
-                              }}
-                            >
-                              {user.full_name}
-                            </li>
-                          ))}
+                          {users
+                            .slice() // 원본 배열을 변경하지 않기 위해 복사
+                            .sort((a, b) =>
+                              a.full_name.localeCompare(b.full_name, "ko"),
+                            ) // 한국어 정렬
+                            .map((user) => (
+                              <li
+                                key={user.email}
+                                className="cursor-pointer px-3 py-2 select-none hover:bg-gray-100"
+                                onClick={() => {
+                                  setSelectedUser(user.email);
+                                  setSelectedUserDisplay(user.full_name);
+                                  setIsUserDropdownOpen(false);
+                                }}
+                              >
+                                {user.full_name}
+                              </li>
+                            ))}
                         </ul>
                       </div>
                     )}
@@ -323,16 +388,42 @@ export default function FacultyPage() {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {Object.entries(groupedSnippets).map(
-                    ([key, userSnippets]) => {
-                      const snippet = userSnippets[0]; // Use first snippet for user info
-                      return (
-                        <div key={key}>
-                          <FacultySnippetView snippet={snippet} />
-                        </div>
-                      );
-                    },
-                  )}
+                  {(() => {
+                    // 정렬된 배열로 변환
+                    return Array.from(groupedSnippetsMap.entries())
+                      .sort(([, snippetsA], [, snippetsB]) => {
+                        // 1. 팀 이름으로 정렬
+                        const teamNameA = snippetsA[0]?.team_name ?? "";
+                        const teamNameB = snippetsB[0]?.team_name ?? "";
+                        const teamComparison =
+                          teamNameA.localeCompare(teamNameB);
+                        if (teamComparison !== 0) return teamComparison;
+
+                        // 2. 팀이 같으면 사용자 이름으로 정렬
+                        const fullNameA = snippetsA[0]?.full_name ?? "";
+                        const fullNameB = snippetsB[0]?.full_name ?? "";
+                        const nameComparison =
+                          fullNameA.localeCompare(fullNameB);
+                        if (nameComparison !== 0) return nameComparison;
+
+                        // 3. 사용자도 같으면 날짜 역순으로 정렬 (최신 날짜가 먼저)
+                        const dateA = snippetsA[0]?.snippet_date ?? "";
+                        const dateB = snippetsB[0]?.snippet_date ?? "";
+                        return dateB.localeCompare(dateA); // 내림차순
+                      })
+                      .map(([key, userSnippets]) => {
+                        // 첫 번째 스니펫이 확실히 존재하는지 확인
+                        const snippet = userSnippets[0];
+                        if (!snippet) return null;
+
+                        return (
+                          <div key={key}>
+                            <FacultySnippetView snippet={snippet} />
+                          </div>
+                        );
+                      })
+                      .filter(Boolean); // null 값은 필터링
+                  })()}
                 </div>
               )}
             </div>

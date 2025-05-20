@@ -12,23 +12,13 @@ interface FacultySnippetViewProps {
 }
 
 export const FacultySnippetView = ({ snippet }: FacultySnippetViewProps) => {
-  const snippetDate = new Date(snippet.snippet_date);
+  const DEFAULT_DATE = new Date(2025, 1, 1);
 
-  // Helper function to extract content sections
-  const extractSection = (
-    content: string | null,
-    sectionStart: string,
-    sectionEnd: string,
-  ) => {
-    if (!content || !content.includes(sectionStart)) return null;
-
-    const startIndex = content.indexOf(sectionStart) + sectionStart.length;
-    const endIndex = content.includes(sectionEnd)
-      ? content.indexOf(sectionEnd, startIndex)
-      : content.length;
-
-    return content.substring(startIndex, endIndex).trim();
-  };
+  // Get snippet date or use default date if not available
+  const snippetDate =
+    snippet.snippet_date && !isNaN(new Date(snippet.snippet_date).getTime())
+      ? new Date(snippet.snippet_date)
+      : DEFAULT_DATE;
 
   if (!snippet.content) {
     return (
@@ -38,30 +28,6 @@ export const FacultySnippetView = ({ snippet }: FacultySnippetViewProps) => {
     );
   }
 
-  const whatContent = extractSection(
-    snippet.content,
-    "What(무엇을?)",
-    "Why(왜 했는가?)",
-  );
-  const whyContent = extractSection(
-    snippet.content,
-    "Why(왜 했는가?)",
-    "Highlight(핵심 점)",
-  );
-  const highlightContent = extractSection(
-    snippet.content,
-    "Highlight(핵심 점)",
-    "Lowlight(개선 점)",
-  );
-  const lowlightContent = extractSection(
-    snippet.content,
-    "Lowlight(개선 점)",
-    "Next Focus(",
-  );
-  const nextFocusContent = snippet.content.includes("Next Focus(")
-    ? snippet.content.substring(snippet.content.indexOf("Next Focus("))
-    : null;
-
   return (
     <div className="rounded-lg bg-white p-6 shadow-sm">
       <div className="mb-4 border-b border-gray-200 pb-4">
@@ -70,7 +36,10 @@ export const FacultySnippetView = ({ snippet }: FacultySnippetViewProps) => {
             <h2 className="text-xl font-bold text-gray-900">
               {snippet.full_name}{" "}
               <span className="font-normal text-gray-500">
-                / {snippet.team_alias}
+                /{" "}
+                {Array.isArray(snippet.team_alias)
+                  ? snippet.team_alias[snippet.team_alias.length - 1]
+                  : snippet.team_alias}
               </span>
             </h2>
             <p className="text-gray-500">
@@ -88,100 +57,14 @@ export const FacultySnippetView = ({ snippet }: FacultySnippetViewProps) => {
       </div>
 
       <div className="space-y-4">
-        {whatContent && (
-          <div>
-            <h3 className="font-medium text-gray-900">
-              {strings.faculty.whatTitle}
-            </h3>
-            <div className="markdown mt-2 text-gray-600">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-              >
-                {whatContent}
-              </ReactMarkdown>
-            </div>
-          </div>
-        )}
-
-        {whyContent && (
-          <div>
-            <h3 className="font-medium text-gray-900">
-              {strings.faculty.whyTitle}
-            </h3>
-            <div className="markdown mt-2 text-gray-600">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-              >
-                {whyContent}
-              </ReactMarkdown>
-            </div>
-          </div>
-        )}
-
-        {highlightContent && (
-          <div>
-            <h3 className="font-medium text-gray-900">
-              {strings.faculty.highlightTitle}
-            </h3>
-            <div className="markdown mt-2 text-gray-600">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-              >
-                {highlightContent}
-              </ReactMarkdown>
-            </div>
-          </div>
-        )}
-
-        {lowlightContent && (
-          <div>
-            <h3 className="font-medium text-gray-900">
-              {strings.faculty.lowlightTitle}
-            </h3>
-            <div className="markdown mt-2 text-gray-600">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-              >
-                {lowlightContent}
-              </ReactMarkdown>
-            </div>
-          </div>
-        )}
-
-        {nextFocusContent && (
-          <div>
-            <h3 className="font-medium text-gray-900">
-              {strings.faculty.nextFocusTitle}
-            </h3>
-            <div className="markdown mt-2 text-gray-600">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-              >
-                {nextFocusContent}
-              </ReactMarkdown>
-            </div>
-          </div>
-        )}
-
-        {!whatContent &&
-          !whyContent &&
-          !highlightContent &&
-          !lowlightContent &&
-          !nextFocusContent && (
-            <div className="markdown max-w-none">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-              >
-                {snippet.content}
-              </ReactMarkdown>
-            </div>
-          )}
+        <div className="markdown max-w-none text-gray-600">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+          >
+            {snippet.content}
+          </ReactMarkdown>
+        </div>
       </div>
     </div>
   );

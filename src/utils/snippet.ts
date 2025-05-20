@@ -167,6 +167,9 @@ export async function fetchFacultySnippets(
     .select()
     .gte("snippet_date", dateFrom)
     .lte("snippet_date", dateTo)
+    .neq("team_name", "교수진") // Exclude "교수진" team
+    .order("team_name", { ascending: true })
+    .order("full_name", { ascending: true })
     .order("snippet_date", { ascending: false });
 
   if (teamName && teamName !== "모든 팀") {

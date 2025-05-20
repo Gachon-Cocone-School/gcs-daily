@@ -223,6 +223,7 @@ export interface Database {
           team_alias: string;
           full_name: string;
           point: number;
+          avatar_url: string;
         };
       };
     };
