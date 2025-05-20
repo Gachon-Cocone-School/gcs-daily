@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "~/providers/AuthProvider";
 import Loading from "~/components/Loading";
 import { supabase } from "~/lib/supabase";
@@ -36,7 +37,8 @@ export default function FacultyGuard({ children }: FacultyGuardProps) {
         if (teamError) throw teamError;
 
         // 사용자 이메일이 교수진 팀에 포함되어 있는지 확인
-        const hasFacultyAccess = facultyTeam?.emails?.includes(user.email);
+        const emailsArray = (facultyTeam?.emails as string[]) || [];
+        const hasFacultyAccess = emailsArray.includes(user.email);
         setIsFaculty(Boolean(hasFacultyAccess));
         setIsLoading(false);
       } catch (err) {
@@ -86,12 +88,12 @@ export default function FacultyGuard({ children }: FacultyGuardProps) {
             </div>
           )}
           <div className="text-center">
-            <a
+            <Link
               href="/"
               className="inline-block rounded-md bg-gray-900 px-5 py-2 text-center text-sm font-medium text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-600 focus:ring-offset-2 focus:outline-none"
             >
               {strings.faculty.goHome}
-            </a>
+            </Link>
           </div>
         </div>
       </div>
