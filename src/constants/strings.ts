@@ -109,5 +109,9 @@ export const strings = {
     noSnippets: "해당 조건에 맞는 스니펫이 없습니다.",
     loading: "데이터 로딩 중...",
     point: "점수",
+    accessDenied: "접근 권한 없음",
+    accessDeniedMessage: "이 페이지는 교수진만 접근할 수 있습니다.",
+    goHome: "홈으로 돌아가기",
+    errorCheckingAccess: "접근 권한 확인 중 오류가 발생했습니다.",
   },
 } as const;

@@ -35,8 +35,7 @@ export const FacultySnippetView = ({ snippet }: FacultySnippetViewProps) => {
           <div>
             <h2 className="text-xl font-bold text-gray-900">
               {snippet.full_name}{" "}
-              <span className="font-normal text-gray-500">
-                /{" "}
+              <span className="ml-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700">
                 {Array.isArray(snippet.team_alias)
                   ? snippet.team_alias[snippet.team_alias.length - 1]
                   : snippet.team_alias}

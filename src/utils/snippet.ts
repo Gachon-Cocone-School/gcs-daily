@@ -6,6 +6,7 @@ import type {
   Database,
 } from "~/lib/database.types";
 import type { SnippetExpanded } from "~/types/snippet";
+import { strings } from "~/constants/strings";
 
 export async function ensureDateString(date: Date): Promise<string> {
   const localDate = new Date(date);
@@ -172,11 +173,11 @@ export async function fetchFacultySnippets(
     .order("full_name", { ascending: true })
     .order("snippet_date", { ascending: false });
 
-  if (teamName && teamName !== "모든 팀") {
+  if (teamName && teamName !== strings.faculty.allTeams) {
     query = query.eq("team_name", teamName);
   }
 
-  if (userEmail && userEmail !== "모든 작성자") {
+  if (userEmail && userEmail !== strings.faculty.allUsers) {
     query = query.eq("user_email", userEmail);
   }
 

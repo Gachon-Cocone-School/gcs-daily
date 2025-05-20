@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { Header } from "~/components/Header";
 import { strings } from "~/constants/strings";
 import AuthGuard from "~/components/AuthGuard";
+import FacultyGuard from "~/components/FacultyGuard";
 import Loading from "~/components/Loading";
 import { fetchFacultySnippets } from "~/utils/snippet";
 import type { SnippetExpandedByUser } from "~/utils/snippet";
@@ -30,8 +31,6 @@ export default function FacultyPage() {
 
   // States for filters and data
   const [selectedTeam, setSelectedTeam] = useState<string>("모든 팀");
-  const [selectedTeamDisplay, setSelectedTeamDisplay] =
-    useState<string>("모든 팀");
   const [selectedUser, setSelectedUser] = useState<string>("모든 작성자");
   const [selectedUserDisplay, setSelectedUserDisplay] =
     useState<string>("모든 작성자");
@@ -135,7 +134,10 @@ export default function FacultyPage() {
             if (facultyTeam?.emails && facultyTeam.emails.length > 0) {
               // 교수진 이메일에 포함되지 않은 사용자만 필터링
               filteredUsers = allUsers.filter(
-                (user) => !facultyTeam.emails.includes(user.email),
+                (user) =>
+                  !facultyTeam.emails ||
+                  !Array.isArray(facultyTeam.emails) ||
+                  !facultyTeam.emails.includes(user.email),
               );
             }
 
@@ -174,15 +176,16 @@ export default function FacultyPage() {
     }
   };
 
-  // Initial fetch on component mount
-  useEffect(() => {
-    void fetchSnippets();
-  }, []);
-
   // Handle date filter button click
   const handleApplyDateFilter = () => {
     void fetchSnippets();
   };
+
+  // Initial fetch on component mount
+  useEffect(() => {
+    void fetchSnippets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Group snippets by user and date using Map to preserve order
   const groupedSnippetsMap = new Map<string, SnippetExpandedByUser[]>();
@@ -207,14 +210,14 @@ export default function FacultyPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen">
-        <Head>
-          <title>{strings.faculty.title}</title>
-          <meta name="description" content={strings.app.description} />
-          <link rel="icon" href="/favicon.ico" />
-        </Head>
-
+      <FacultyGuard>
         <div className="flex min-h-screen flex-col">
+          <Head>
+            <title>{strings.faculty.title}</title>
+            <meta name="description" content={strings.app.description} />
+            <link rel="icon" href="/favicon.ico" />
+          </Head>
+
           <Header />
 
           <main className="flex-1 bg-gray-50 p-4 md:p-8">
@@ -429,7 +432,7 @@ export default function FacultyPage() {
             </div>
           </main>
         </div>
-      </div>
+      </FacultyGuard>
     </AuthGuard>
   );
 }
