@@ -48,6 +48,14 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
   const badgeSnippet = snippets[0];
   const badgeValue = badgeSnippet?.badge ?? 0;
 
+  // Check each binary position for badges
+  const showBadge000001 = (badgeValue & 0b000001) > 0;
+  const showBadge000010 = (badgeValue & 0b000010) > 0;
+  const showBadge000100 = (badgeValue & 0b000100) > 0;
+  const showBadge001000 = (badgeValue & 0b001000) > 0;
+  const showBadge010000 = (badgeValue & 0b010000) > 0;
+  const showBadge100000 = (badgeValue & 0b100000) > 0;
+
   const getDateString = () => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -82,18 +90,118 @@ const DateCell: FC<DateCellProps> = ({ date, isSelected, snippets = [] }) => {
       aria-disabled={isFuture}
       aria-pressed={isSelected}
     >
-      <div className="flex flex-1 flex-col items-center justify-center gap-1">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3">
         {badgeValue > 0 && (
-          <div className="flex justify-center">
-            <div className="relative h-10 w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14">
-              <Image
-                src={`/${badgeValue === 3 ? "gold" : badgeValue === 2 ? "silver" : "bronze"}_badge.svg`}
-                alt={`${badgeValue === 3 ? "월간" : badgeValue === 2 ? "주간" : "일간"} 뱃지`}
-                fill
-                priority
-                sizes="(max-width: 1024px) 40px, (max-width: 1280px) 48px, 56px"
-                className="object-contain"
-              />
+          <div className="mb-2 flex justify-center">
+            <div className="grid grid-cols-2 gap-1">
+              {showBadge000001 && (
+                <div
+                  className="group relative h-5 w-5 lg:h-7 lg:w-7 xl:h-9 xl:w-9"
+                  title={strings.badges.badge000001}
+                >
+                  <Image
+                    src="/badge_000001.png"
+                    alt={strings.badges.badge000001}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 16px, (max-width: 1280px) 24px, 36px"
+                    className="object-contain"
+                  />
+                  <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity duration-200 group-hover:block group-hover:opacity-100">
+                    {strings.badges.badge000001}
+                  </div>
+                </div>
+              )}
+              {showBadge000010 && (
+                <div
+                  className="group relative h-5 w-5 lg:h-7 lg:w-7 xl:h-9 xl:w-9"
+                  title={strings.badges.badge000010}
+                >
+                  <Image
+                    src="/badge_000010.png"
+                    alt={strings.badges.badge000010}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 16px, (max-width: 1280px) 24px, 36px"
+                    className="object-contain"
+                  />
+                  <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity duration-200 group-hover:block group-hover:opacity-100">
+                    {strings.badges.badge000010}
+                  </div>
+                </div>
+              )}
+              {showBadge000100 && (
+                <div
+                  className="group relative h-5 w-5 lg:h-7 lg:w-7 xl:h-9 xl:w-9"
+                  title={strings.badges.badge000100}
+                >
+                  <Image
+                    src="/badge_000100.png"
+                    alt={strings.badges.badge000100}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 16px, (max-width: 1280px) 24px, 36px"
+                    className="object-contain"
+                  />
+                  <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity duration-200 group-hover:block group-hover:opacity-100">
+                    {strings.badges.badge000100}
+                  </div>
+                </div>
+              )}
+              {showBadge001000 && (
+                <div
+                  className="group relative h-5 w-5 lg:h-7 lg:w-7 xl:h-9 xl:w-9"
+                  title={strings.badges.badge001000}
+                >
+                  <Image
+                    src="/badge_001000.png"
+                    alt={strings.badges.badge001000}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 16px, (max-width: 1280px) 24px, 36px"
+                    className="object-contain"
+                  />
+                  <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity duration-200 group-hover:block group-hover:opacity-100">
+                    {strings.badges.badge001000}
+                  </div>
+                </div>
+              )}
+              {showBadge010000 && (
+                <div
+                  className="group relative h-5 w-5 lg:h-7 lg:w-7 xl:h-9 xl:w-9"
+                  title={strings.badges.badge010000}
+                >
+                  <Image
+                    src="/badge_010000.png"
+                    alt={strings.badges.badge010000}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 16px, (max-width: 1280px) 24px, 36px"
+                    className="object-contain"
+                  />
+                  <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity duration-200 group-hover:block group-hover:opacity-100">
+                    {strings.badges.badge010000}
+                  </div>
+                </div>
+              )}
+              {showBadge100000 && (
+                <div
+                  className="group relative h-5 w-5 lg:h-7 lg:w-7 xl:h-9 xl:w-9"
+                  title={strings.badges.badge100000}
+                >
+                  <Image
+                    src="/badge_100000.png"
+                    alt={strings.badges.badge100000}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 16px, (max-width: 1280px) 24px, 36px"
+                    className="object-contain"
+                  />
+                  <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity duration-200 group-hover:block group-hover:opacity-100">
+                    {strings.badges.badge100000}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

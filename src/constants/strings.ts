@@ -17,6 +17,14 @@ export const strings = {
       loadingTeam: "팀 정보 로딩 중...",
     },
   },
+  badges: {
+    badge000001: "일간 출석 뱃지",
+    badge000010: "일간 1등 뱃지",
+    badge000100: "주간 1등 뱃지",
+    badge001000: "월간 1등 뱃지",
+    badge010000: "학기 1등 뱃지",
+    badge100000: "학년 1등 뱃지",
+  },
   auth: {
     signIn: {
       google: "구글 계정으로 로그인",
