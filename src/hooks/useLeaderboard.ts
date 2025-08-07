@@ -59,9 +59,6 @@ function calculateRank(
   return sortedItems.filter((item) => item.point > currentPoint).length + 1;
 }
 
-// 제외할 팀 상수
-const EXCLUDED_TEAMS = ["6기-9팀"];
-
 export const useLeaderboard = () => {
   const [data, setData] = useState<LeaderboardData>({
     daily: [],
@@ -72,18 +69,16 @@ export const useLeaderboard = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        // Get teams data for aliases (only 6기 teams)
+        // Get teams data for aliases (is_leaderboard가 true인 팀만)
         const { data: teamsData, error: teamsError } = await supabase
           .from("teams")
           .select("*")
-          .ilike("team_name", "%6기%");
+          .eq("is_leaderboard", true);
 
         if (teamsError) throw teamsError;
 
-        // 6기-9팀을 제외한 팀들만 필터링
-        const teams = (teamsData ?? [])
-          .filter(isValidTeam)
-          .filter((team) => !EXCLUDED_TEAMS.includes(team.team_name));
+        // is_leaderboard가 true인 팀만 사용
+        const teams = (teamsData ?? []).filter(isValidTeam);
 
         // Get the latest team achievement data (latest date)
         const { data: achievementsData, error: achievementsError } =
